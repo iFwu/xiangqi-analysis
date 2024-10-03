@@ -45,21 +45,26 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   const croppedRegion = img.roi(rect);
 
   // 步骤 3：霍夫直线变换检测棋盘线条并使用 KMeans 聚类
-  const gridCells = segmentChessboard(croppedRegion, expandRatioW, expandRatioH);
+  const { gridCells, expandedRect } = segmentChessboard(croppedRegion, expandRatioW, expandRatioH);
 
   // 清理内存
   img.delete(); gray.delete(); blurred.delete(); edges.delete();
   kernel.delete(); dilatedEdges.delete(); finalEdges.delete();
   contours.delete(); hierarchy.delete(); croppedRegion.delete();
 
-  // 修改返回值
+  // 修改返回值，使用扩展后的矩形
   return {
     gridCells,
-    chessboardRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+    chessboardRect: {
+      x: rect.x + expandedRect.x,
+      y: rect.y + expandedRect.y,
+      width: expandedRect.width,
+      height: expandedRect.height
+    }
   };
 }
 
-function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, expandRatioH: number = 0.06): ImageData[] {
+function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRatioH: number): { gridCells: ImageData[], expandedRect: { x: number, y: number, width: number, height: number } } {
   // 步骤 1：对棋盘区域进行预处理
   const grayCropped = new cv.Mat();
   cv.cvtColor(croppedRegion, grayCropped, cv.COLOR_RGBA2GRAY);
@@ -74,7 +79,10 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, e
 
   if (lines.rows === 0) {
     console.log("无法检测到棋盘线条。");
-    return [];
+    return {
+      gridCells: [],
+      expandedRect: { x: 0, y: 0, width: 0, height: 0 }
+    };
   }
 
   const horizontalLines: number[][] = [];
@@ -92,10 +100,13 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, e
 
   if (horizontalLines.length < 10 || verticalLines.length < 9) {
     console.log("线条不足，无法进行 KMeans 聚类。");
-    return [];
+    return {
+      gridCells: [],
+      expandedRect: { x: 0, y: 0, width: 0, height: 0 }
+    };
   }
 
-  // KMeans 聚类：检测棋盘的行和列
+  // KMeans 聚类：检测棋盘的行和
   const horizontalYPositions = horizontalLines.flatMap(line => [line[1], line[3]]);
   const verticalXPositions = verticalLines.flatMap(line => [line[0], line[2]]);
 
@@ -114,8 +125,8 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, e
   const chessboardRegion = croppedRegion.roi(new cv.Rect(minX, minY, maxX - minX, maxY - minY));
 
   // 步骤 2：扩展棋盘区域
-  const regionH = chessboardRegion.rows;
-  const regionW = chessboardRegion.cols;
+  const regionW = maxX - minX;
+  const regionH = maxY - minY;
   const expandW = Math.floor(regionW * expandRatioW);
   const expandH = Math.floor(regionH * expandRatioH);
 
@@ -159,5 +170,8 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, e
   grayCropped.delete(); blurCropped.delete(); edgesCropped.delete();
   lines.delete(); chessboardRegion.delete(); expandedChessboardRegion.delete();
 
-  return gridCells;
+  return {
+    gridCells,
+    expandedRect: { x: newX, y: newY, width: newW, height: newH }
+  };
 }

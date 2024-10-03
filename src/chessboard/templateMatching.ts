@@ -1,6 +1,5 @@
 import cv from "@techstark/opencv-js";
 import { PieceType, PieceColor, PieceName } from './types';
-import { displayImage } from './utils';
 
 // 预处理模板图像
 function preprocessTemplateImage(templateImage: cv.Mat, cellSize: [ number, number ]): cv.Mat {
@@ -19,32 +18,13 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
 
   const loadImage = async (pieceType: PieceName): Promise<cv.Mat | null> => {
     try {
-      console.log(`Attempting to load image for ${pieceType}`);
       const response = await fetch(`/chess_templates/${pieceType}.png`);
       if (!response.ok) {
         console.error(`Failed to fetch image for ${pieceType}: ${response.statusText}`);
         return null;
       }
       const blob = await response.blob();
-      console.log(`Blob size for ${pieceType}: ${blob.size} bytes`);
-      
-      if (blob.size === 0) {
-        console.error(`Empty blob for ${pieceType}`);
-        return null;
-      }
-
-      const imageBitmap = await createImageBitmap(blob).catch(error => {
-        console.error(`Failed to create ImageBitmap for ${pieceType}:`, error);
-        return null;
-      });
-      
-      if (!imageBitmap) {
-        console.error(`ImageBitmap creation failed for ${pieceType}`);
-        return null;
-      }
-
-      console.log(`Successfully created ImageBitmap for ${pieceType}`);
-
+      const imageBitmap = await createImageBitmap(blob);
       const canvas = document.createElement('canvas');
       canvas.width = imageBitmap.width;
       canvas.height = imageBitmap.height;
@@ -72,7 +52,6 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
     const template = await loadImage(pieceType);
     if (template) {
       templates[pieceType] = template;
-      console.log(`Successfully loaded template for ${pieceType}`);
     } else {
       console.warn(`Failed to load template for ${pieceType}`);
     }
@@ -85,15 +64,12 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
 export function templateMatchingForPiece(
   cellImage: cv.Mat,
   templates: Record<PieceName, cv.Mat>,
-  pieceColor: PieceColor,
-  cellIndex: number
+  pieceColor: PieceColor
 ): PieceType | null {
   let maxMatchValue = -1;
   let matchedPiece: PieceType | null = null;
 
   const cellSize = [ cellImage.cols, cellImage.rows ];
-
-  displayImage("Processed Cell Image", cellImage, cellIndex);
 
   // 将 cellImage 转换为灰度图（如果还不是的话）
   const grayCellImage = new cv.Mat();
@@ -105,8 +81,6 @@ export function templateMatchingForPiece(
     cellImage.copyTo(grayCellImage);
   }
 
-  displayImage("Gray Processed Cell Image", grayCellImage, cellIndex);
-
   // 根据颜色过滤模板
   const colorSpecificTemplates = Object.entries(templates).filter(([ pieceName, _ ]) => {
     if (pieceColor === 'red') return pieceName.startsWith('red_');
@@ -114,37 +88,31 @@ export function templateMatchingForPiece(
     return true; // 如果颜色未知，使用所有模板
   });
 
-  if (colorSpecificTemplates.length === 0) {
-    console.log("没有找到对应颜色的模板。");
-    grayCellImage.delete();
-    return null;
-  }
-
   // 遍历所有过滤后的模板进行匹配
   for (const [ pieceName, template ] of colorSpecificTemplates) {
     const resizedTemplate = new cv.Mat();
     cv.resize(template, resizedTemplate, new cv.Size(cellSize[ 0 ], cellSize[ 1 ]));
 
-    displayImage(`${pieceName} Template`, resizedTemplate, cellIndex);
-
     const result = new cv.Mat();
-    console.log(`${pieceName} result size before match:`, result.rows, result.cols, result.type());
-
-    try {
-      cv.matchTemplate(grayCellImage, resizedTemplate, result, cv.TM_CCOEFF_NORMED);
-      console.log(`${pieceName} result size after match:`, result.rows, result.cols, result.type());
-    } catch (error) {
-      console.error(`Error in matchTemplate for ${pieceName}:`, error);
-      continue;
-    }
+    cv.matchTemplate(grayCellImage, resizedTemplate, result, cv.TM_CCOEFF_NORMED);
 
     // @ts-ignore
     const minMax = cv.minMaxLoc(result);
-    console.log(`${pieceName} match value:`, minMax.maxVal);
 
     if (minMax.maxVal > maxMatchValue) {
       maxMatchValue = minMax.maxVal;
-      matchedPiece = pieceName.split('_')[1] as PieceType; // Extract the piece type
+      // 修改这里以返回正确的 PieceType
+      const pieceTypeMap: Record<string, PieceType> = {
+        'king': pieceColor === 'red' ? 'k' : 'K',
+        'guard': pieceColor === 'red' ? 'g' : 'G',
+        'bishop': pieceColor === 'red' ? 'b' : 'B',
+        'knight': pieceColor === 'red' ? 'n' : 'N',
+        'rook': pieceColor === 'red' ? 'r' : 'R',
+        'cannon': pieceColor === 'red' ? 'c' : 'C',
+        'pawn': pieceColor === 'red' ? 'p' : 'P'
+      };
+      const pieceTypeName = pieceName.split('_')[1];
+      matchedPiece = pieceTypeMap[pieceTypeName] || null;
     }
 
     resizedTemplate.delete();
@@ -156,10 +124,8 @@ export function templateMatchingForPiece(
   // 设置阈值，只有超过某个匹配度的结果才认为匹配成功
   const matchingThreshold = 0.3;
   if (maxMatchValue > matchingThreshold) {
-    console.log("Matched piece:", matchedPiece, "with value:", maxMatchValue);
     return matchedPiece;
   } else {
-    console.log("没有匹配到合适的棋子。最高匹配值:", maxMatchValue);
     return null;
   }
 }
