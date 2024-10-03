@@ -1,9 +1,6 @@
 import { PieceColor } from './types';
 import cv from "@techstark/opencv-js";
 
-// @ts-ignore
-window.cv = cv;
-
 // 检测格子中是否有棋子
 export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30): boolean {
   const mat = cv.matFromImageData(cellImage);
@@ -19,7 +16,7 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
 }
 
 // 检测棋子的颜色
-export function detectPieceColor(cellImage: ImageData, index: number): PieceColor {
+export function detectPieceColor(cellImage: ImageData): PieceColor {
   const hsvImage = convertToHSV(cellImage);
 
   const redMask = createColorMask(hsvImage, [0, 120, 120], [10, 255, 255], [160, 120, 120], [179, 255, 255]);

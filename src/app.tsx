@@ -1,33 +1,55 @@
 import { useState, useEffect } from 'preact/hooks'
 import './app.css'
-import { ChessboardDisplay } from './chessboard/ChessboardDisplay'
-import { ChessboardState, PieceColor } from './chessboard/types'
+import { ChessboardState, PieceColor, PieceName } from './chessboard/types'
 import { detectAndExtractChessboard } from './chessboard/chessboardDetection';
 import { detectPieceInCell, detectPieceColor, processPiece } from './chessboard/pieceDetection';
+import { createOverlayImage } from './chessboard/overlayCreation';
+import { preprocessAllTemplates, templateMatchingForPiece } from './chessboard/templateMatching';
 import cv from "@techstark/opencv-js";
 
 export function App() {
   const [imageSrc, setImageSrc] = useState('')
+  const [overlayImageSrc, setOverlayImageSrc] = useState('')
   const [chessboardState, setChessboardState] = useState<ChessboardState | null>(null)
-  const [gridCells, setGridCells] = useState<ImageData[]>([])
-  const [detectedPieces, setDetectedPieces] = useState<{ image: string, color: PieceColor }[]>([])
+  const [templates, setTemplates] = useState<Record<PieceName, cv.Mat> | null>(null)
+  const [templatesLoaded, setTemplatesLoaded] = useState(false)
 
   useEffect(() => {
-    cv.onRuntimeInitialized = () => {
+    const initializeOpenCV = async () => {
+      await new Promise<void>((resolve) => {
+        cv.onRuntimeInitialized = resolve;
+      });
       console.log("OpenCV.js is ready");
-      loadAndProcessDebugImage();
+      try {
+        const loadedTemplates = await preprocessAllTemplates();
+        if (Object.keys(loadedTemplates).length === 0) {
+          console.error("No templates were successfully loaded");
+          return;
+        }
+        console.log("Loaded templates:", loadedTemplates);
+        setTemplates(loadedTemplates);
+        setTemplatesLoaded(true);
+      } catch (error) {
+        console.error("Error loading templates:", error);
+      }
     };
+
+    initializeOpenCV();
   }, []);
+
+  useEffect(() => {
+    if (templatesLoaded) {
+      loadAndProcessDebugImage();
+    }
+  }, [templatesLoaded]);
 
   const loadAndProcessDebugImage = () => {
     const img = new Image();
     img.onload = () => {
       setImageSrc(img.src);
-      const detectedGridCells = detectAndExtractChessboard(img);
-      setGridCells(detectedGridCells);
-      detectPieces(detectedGridCells);
+      processImage(img);
     };
-    img.src = "/public/chessboard2.png";
+    img.src = "/chessboard2.png";
   };
 
   const handleImageUpload = (event: Event) => {
@@ -38,9 +60,7 @@ export function App() {
         const img = new Image()
         img.onload = () => {
           setImageSrc(img.src)
-          const detectedGridCells = detectAndExtractChessboard(img);
-          setGridCells(detectedGridCells);
-          detectPieces(detectedGridCells);
+          processImage(img);
         }
         img.src = e.target?.result as string
       }
@@ -48,47 +68,47 @@ export function App() {
     }
   }
 
-  const detectPieces = (cells: ImageData[]) => {
-    console.log(`开始检测棋子，共 ${cells.length} 个格子`);
-    const detectedPieces: { image: string, color: PieceColor }[] = [];
-    let processedCount = 0;
-    const maxProcessCount = 40; // 设置要处理的最大格子数
+  const processImage = (img: HTMLImageElement) => {
+    const { gridCells, chessboardRect } = detectAndExtractChessboard(img);
+    const detectedPieces: { position: [number, number], color: PieceColor, type?: string | null }[] = [];
 
-    cells.forEach((cell, index) => {
-      if (processedCount >= maxProcessCount) return;
+    console.log("Total grid cells:", gridCells.length);
+    console.log("Chessboard rect:", chessboardRect);
 
-      console.log(`检测第 ${index + 1} 个格子`);
+    // 只处理前两个棋子
+    for (let index = 0; index < Math.min(4, gridCells.length); index++) {
+      const cell = gridCells[index];
       const hasPiece = detectPieceInCell(cell);
-      console.log(`格子 ${index + 1} 是否有棋子: ${hasPiece}`);
       if (hasPiece) {
-        const pieceColor = detectPieceColor(cell, index);
-        console.log(`格子 ${index + 1} 棋子颜色: ${pieceColor}`);
+        const pieceColor = detectPieceColor(cell);
         if (pieceColor !== 'unknown') {
-          const processedPiece = processPiece(cell, pieceColor);
-          console.log(`格子 ${index + 1} 处理后的棋子尺寸: ${processedPiece.width}x${processedPiece.height}`);
-          const pieceImage = imageDataToDataURL(processedPiece);
-          detectedPieces.push({ image: pieceImage, color: pieceColor });
-          processedCount++;
+          const row = Math.floor(index / 9);  // 修正为 9x10 的棋盘
+          const col = index % 9;
+          let pieceType = null;
+          if (templates && templatesLoaded) {
+            // 处理棋子图像
+            const processedPieceImage = processPiece(cell, pieceColor);
+            const cellMat = cv.matFromImageData(processedPieceImage);
+            pieceType = templateMatchingForPiece(cellMat, templates, pieceColor, index);
+            cellMat.delete();
+          }
+          detectedPieces.push({ position: [row, col], color: pieceColor, type: pieceType });
         }
       }
-    });
+    }
 
-    console.log(`检测完成，共检测到 ${detectedPieces.length} 个棋子`);
-    setDetectedPieces(detectedPieces);
-  };
+    console.log("Detected pieces:", detectedPieces);
 
-  const imageDataToDataURL = (imageData: ImageData): string => {
-    const canvas = document.createElement('canvas');
-    canvas.width = imageData.width;
-    canvas.height = imageData.height;
-    const ctx = canvas.getContext('2d');
-    ctx?.putImageData(imageData, 0, 0);
-    return canvas.toDataURL();
+    const overlayCanvas = createOverlayImage(img, chessboardRect, detectedPieces);
+    setOverlayImageSrc(overlayCanvas.toDataURL());
+
+    // 更新棋盘状态（如果需要的话）
+    // setChessboardState(...);
   };
 
   const imageStyle = {
     maxWidth: '400px',
-    maxHeight: '400px',
+    maxHeight: '800px',
     objectFit: 'contain' as const,
   }
 
@@ -98,22 +118,28 @@ export function App() {
 
       <div className="upload-section">
         <input type="file" onChange={handleImageUpload} />
-        {imageSrc && <img src={imageSrc} alt="uploaded" style={imageStyle} />}
+        {imageSrc && (
+          <div style={{ position: 'relative' }}>
+            <img src={imageSrc} alt="uploaded" style={imageStyle} />
+            {overlayImageSrc && (
+              <img
+                src={overlayImageSrc}
+                alt="overlay"
+                style={{
+                  ...imageStyle,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
-      {chessboardState && <ChessboardDisplay chessboardState={chessboardState} />}
-
-      <div className="detected-pieces">
-        <h2>检测到的棋子：</h2>
-        <div className="piece-grid">
-          {detectedPieces.map((piece, index) => (
-            <div key={index} className="piece-item">
-              <img src={piece.image} alt={`${piece.color} piece`} style={{ width: '50px', height: '50px' }} />
-              <p>{piece.color === 'red' ? '红方棋子' : '黑方棋子'}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* {chessboardState && <ChessboardDisplay chessboardState={chessboardState} />} */}
     </div>
   )
 }

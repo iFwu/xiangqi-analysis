@@ -3,7 +3,7 @@ import { kmeans } from 'ml-kmeans';
 
 // @ts-ignore
 window.cv = cv;
-export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandRatioW: number = 0.055, expandRatioH: number = 0.055): ImageData[] {
+export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandRatioW: number = 0.055, expandRatioH: number = 0.055): { gridCells: ImageData[], chessboardRect: { x: number, y: number, width: number, height: number } } {
   // 步骤 1：图像预处理和边缘检测
   const img = cv.imread(imgElement);
   const gray = new cv.Mat();
@@ -27,7 +27,7 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
 
   if (contours.size() === 0) {
     console.log("未检测到任何轮廓。");
-    return [];
+    return { gridCells: [], chessboardRect: { x: NaN, y: NaN, width: NaN, height: NaN } };
   }
 
   let maxContourIndex = 0;
@@ -52,7 +52,11 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   kernel.delete(); dilatedEdges.delete(); finalEdges.delete();
   contours.delete(); hierarchy.delete(); croppedRegion.delete();
 
-  return gridCells;
+  // 修改返回值
+  return {
+    gridCells,
+    chessboardRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+  };
 }
 
 function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number = 0.06, expandRatioH: number = 0.06): ImageData[] {
