@@ -1,15 +1,14 @@
-import { PieceColor, PieceType } from './types';
+import { PieceColor, PieceName, PieceType } from './types';
 
-const pieceTypeToChineseChar: Record<PieceType, string> = {
-  'k': '帥', 'g': '仕', 'b': '相', 'n': '馬', 'r': '車', 'c': '炮', 'p': '兵',
-  'K': '將', 'G': '士', 'B': '象', 'N': '馬', 'R': '車', 'C': '炮', 'P': '卒',
-  'none': ''
+const pieceTypeToChineseChar: Record<PieceName, string> = {
+  'red_king': '帥', 'red_guard': '仕', 'red_bishop': '相', 'red_knight': '馬', 'red_rook': '車', 'red_cannon': '炮', 'red_pawn': '兵',
+  'black_king': '將', 'black_guard': '士', 'black_bishop': '象', 'black_knight': '馬', 'black_rook': '車', 'black_cannon': '炮', 'black_pawn': '卒',
 };
 
 export function createOverlayImage(
   originalImage: HTMLImageElement,
   chessboardRect: { x: number, y: number, width: number, height: number },
-  detectedPieces: { position: [number, number], color: PieceColor, type: PieceType | null }[]
+  detectedPieces: { position: [number, number], color: PieceColor, type: PieceType }[]
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = originalImage.width;
@@ -34,15 +33,30 @@ export function createOverlayImage(
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, cellWidth, cellHeight);
 
-    if (piece.type) {
+    if (piece.type && piece.type !== 'none') {
+      const pieceName = `${piece.color}_${pieceTypeToFullName(piece.type)}` as PieceName;
+      const chineseChar = pieceTypeToChineseChar[pieceName] || '';
       ctx.fillStyle = piece.color === 'red' ? 'rgba(255, 50, 50, 0.9)' : 'rgba(50, 50, 50, 0.9)';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';
-      const chineseChar = pieceTypeToChineseChar[piece.type as PieceType] || '';
       ctx.fillText(chineseChar, x + cellWidth - 5, y + cellHeight - 5);
     }
   });
 
   return canvas;
+}
+
+function pieceTypeToFullName(type: PieceType): string {
+  const typeMap: Record<PieceType, string> = {
+    'k': 'king',
+    'a': 'guard',
+    'b': 'bishop',
+    'n': 'knight',
+    'r': 'rook',
+    'c': 'cannon',
+    'p': 'pawn',
+    'none': 'none'
+  };
+  return typeMap[type];
 }

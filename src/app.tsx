@@ -10,6 +10,7 @@ import { ImageUploader } from './components/ImageUploader';
 import { ChessboardOverlay } from './components/ChessboardOverlay';
 import { FENDisplay } from './components/FENDisplay';
 import { SolutionDisplay } from './components/SolutionDisplay';
+import { generateFenFromPieces } from './chessboard/fenGeneration';
 
 export function App() {
   const [imageSrc, setImageSrc] = useState('');
@@ -21,6 +22,7 @@ export function App() {
   const [chessboardRect, setChessboardRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [detectedPieces, setDetectedPieces] = useState<{ position: [number, number], color: PieceColor, type: PieceType | null }[]>([]);
   const [originalImageSize, setOriginalImageSize] = useState({ width: 0, height: 0 });
+  const [includeFenSuffix, setIncludeFenSuffix] = useState(true);
 
   useEffect(() => {
     const initializeOpenCV = async () => {
@@ -76,7 +78,7 @@ export function App() {
     console.log("Adjusted chessboard rect:", adjustedChessboardRect);
     setChessboardRect(adjustedChessboardRect);
 
-    const detectedPieces: { position: [number, number], color: PieceColor, type: PieceType | null }[] = [];
+    const detectedPieces: { position: [number, number], color: PieceColor, type: PieceType }[] = [];
 
     gridCells.forEach((cell, index) => {
       const hasPiece = detectPieceInCell(cell);
@@ -85,7 +87,7 @@ export function App() {
         if (pieceColor !== 'unknown') {
           const row = Math.floor(index / 9);
           const col = index % 9;
-          let pieceType = null;
+          let pieceType: PieceType = 'none';
           if (templates && templatesLoaded) {
             const processedPieceImage = processPiece(cell, pieceColor);
             const cellMat = cv.matFromImageData(processedPieceImage);
@@ -93,6 +95,7 @@ export function App() {
             cellMat.delete();
           }
           detectedPieces.push({ position: [row, col], color: pieceColor, type: pieceType });
+          console.log(`Detected piece at (${row}, ${col}): color=${pieceColor}, type=${pieceType}`);
         }
       }
     });
@@ -100,6 +103,20 @@ export function App() {
     setDetectedPieces(detectedPieces);
     const overlayCanvas = createOverlayImage(img, chessboardRect, detectedPieces);
     setOverlayImageSrc(overlayCanvas.toDataURL());
+
+    const pieceLayout: string[][] = Array(10).fill(null).map(() => Array(9).fill('none'));
+    detectedPieces.forEach((piece) => {
+      const [row, col] = piece.position;
+      if (piece.type !== null) {
+        pieceLayout[row][col] = `${piece.color}_${piece.type}`;
+      }
+    });
+
+    console.log("Piece layout:");
+    console.table(pieceLayout);
+
+    const fenCode = generateFenFromPieces(pieceLayout, includeFenSuffix);
+    setFenCode(fenCode);
   };
 
   const handleCopyFEN = () => {
@@ -120,7 +137,12 @@ export function App() {
               chessboardRect={chessboardRect} 
               originalImageSize={originalImageSize}
             />
-            <FENDisplay fenCode={fenCode} onCopy={handleCopyFEN} />
+            <FENDisplay 
+              fenCode={fenCode} 
+              onCopy={handleCopyFEN} 
+              onToggleSuffix={() => setIncludeFenSuffix(!includeFenSuffix)}
+              includeSuffix={includeFenSuffix}
+            />
           </div>
           <SolutionDisplay />
         </div>

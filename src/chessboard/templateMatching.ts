@@ -34,7 +34,7 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
         return null;
       }
       ctx.drawImage(imageBitmap, 0, 0);
-      
+
       const src = cv.imread(canvas);
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
@@ -51,7 +51,7 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
   for (const pieceType of pieceTypes) {
     const template = await loadImage(pieceType);
     if (template) {
-      templates[pieceType] = template;
+      templates[ pieceType ] = template;
     } else {
       console.warn(`Failed to load template for ${pieceType}`);
     }
@@ -65,9 +65,9 @@ export function templateMatchingForPiece(
   cellImage: cv.Mat,
   templates: Record<PieceName, cv.Mat>,
   pieceColor: PieceColor
-): PieceType | null {
+): PieceType {
   let maxMatchValue = -1;
-  let matchedPiece: PieceType | null = null;
+  let matchedPiece: PieceType = 'none';
 
   const cellSize = [ cellImage.cols, cellImage.rows ];
 
@@ -103,16 +103,16 @@ export function templateMatchingForPiece(
       maxMatchValue = minMax.maxVal;
       // 修改这里以返回正确的 PieceType
       const pieceTypeMap: Record<string, PieceType> = {
-        'king': pieceColor === 'red' ? 'k' : 'K',
-        'guard': pieceColor === 'red' ? 'g' : 'G',
-        'bishop': pieceColor === 'red' ? 'b' : 'B',
-        'knight': pieceColor === 'red' ? 'n' : 'N',
-        'rook': pieceColor === 'red' ? 'r' : 'R',
-        'cannon': pieceColor === 'red' ? 'c' : 'C',
-        'pawn': pieceColor === 'red' ? 'p' : 'P'
+        'king': 'k',
+        'guard': 'a',
+        'bishop': 'b',
+        'knight': 'n',
+        'rook': 'r',
+        'cannon': 'c',
+        'pawn': 'p'
       };
-      const pieceTypeName = pieceName.split('_')[1];
-      matchedPiece = pieceTypeMap[pieceTypeName] || null;
+      const pieceTypeName = pieceName.split('_')[ 1 ];
+      matchedPiece = pieceTypeMap[ pieceTypeName ] || 'none';
     }
 
     resizedTemplate.delete();
@@ -126,6 +126,6 @@ export function templateMatchingForPiece(
   if (maxMatchValue > matchingThreshold) {
     return matchedPiece;
   } else {
-    return null;
+    return 'none';
   }
 }
