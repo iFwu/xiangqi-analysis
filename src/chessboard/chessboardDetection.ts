@@ -4,7 +4,6 @@ import { kmeans } from 'ml-kmeans';
 // @ts-ignore
 window.cv = cv;
 export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandRatioW: number = 0.055, expandRatioH: number = 0.055): { gridCells: ImageData[], chessboardRect: { x: number, y: number, width: number, height: number } } {
-  // 步骤 1：图像预处理和边缘检测
   const img = cv.imread(imgElement);
   const gray = new cv.Mat();
   cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
@@ -13,14 +12,12 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   const edges = new cv.Mat();
   cv.Canny(blurred, edges, 30, 150);
 
-  // 形态学操作：膨胀与腐蚀
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
   const dilatedEdges = new cv.Mat();
   cv.dilate(edges, dilatedEdges, kernel, new cv.Point(-1, -1), 3);
   const finalEdges = new cv.Mat();
   cv.erode(dilatedEdges, finalEdges, kernel, new cv.Point(-1, -1), 1);
 
-  // 步骤 2：检测所有轮廓并提取最大轮廓区域
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
   cv.findContours(finalEdges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
@@ -44,15 +41,12 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   const rect = cv.boundingRect(maxContour);
   const croppedRegion = img.roi(rect);
 
-  // 步骤 3：霍夫直线变换检测棋盘线条并使用 KMeans 聚类
   const { gridCells, expandedRect } = segmentChessboard(croppedRegion, expandRatioW, expandRatioH);
 
-  // 清理内存
   img.delete(); gray.delete(); blurred.delete(); edges.delete();
   kernel.delete(); dilatedEdges.delete(); finalEdges.delete();
   contours.delete(); hierarchy.delete(); croppedRegion.delete();
 
-  // 确保 rect 和 expandedRect 的计算是正确的
   return {
     gridCells,
     chessboardRect: {
@@ -65,7 +59,6 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
 }
 
 function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRatioH: number): { gridCells: ImageData[], expandedRect: { x: number, y: number, width: number, height: number } } {
-  // 步骤 1：对棋盘区域进行预处理
   const grayCropped = new cv.Mat();
   cv.cvtColor(croppedRegion, grayCropped, cv.COLOR_RGBA2GRAY);
   const blurCropped = new cv.Mat();
@@ -73,7 +66,6 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
   const edgesCropped = new cv.Mat();
   cv.Canny(blurCropped, edgesCropped, 50, 150);
 
-  // 检测棋盘线条
   const lines = new cv.Mat();
   cv.HoughLinesP(edgesCropped, lines, 1, Math.PI / 180, 80, 100, 50);
 
@@ -106,7 +98,6 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
     };
   }
 
-  // KMeans 聚类：检测棋盘的行和
   const horizontalYPositions = horizontalLines.flatMap(line => [line[1], line[3]]);
   const verticalXPositions = verticalLines.flatMap(line => [line[0], line[2]]);
 
@@ -121,10 +112,8 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
   const minX = Math.floor(verticalClusterCenters[0]);
   const maxX = Math.ceil(verticalClusterCenters[verticalClusterCenters.length - 1]);
 
-  // 提取棋盘区域
   const chessboardRegion = croppedRegion.roi(new cv.Rect(minX, minY, maxX - minX, maxY - minY));
 
-  // 步骤 2：扩展棋盘区域
   const regionW = maxX - minX;
   const regionH = maxY - minY;
   const expandW = Math.floor(regionW * expandRatioW);
@@ -137,7 +126,6 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
 
   const expandedChessboardRegion = croppedRegion.roi(new cv.Rect(newX, newY, newW, newH));
 
-  // 步骤 3：按网格分割棋盘格子
   const rows = 10;
   const cols = 9;
   const gridHeight = Math.floor(newH / rows);
@@ -166,7 +154,6 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
     }
   }
 
-  // 清理内存
   grayCropped.delete(); blurCropped.delete(); edgesCropped.delete();
   lines.delete(); chessboardRegion.delete(); expandedChessboardRegion.delete();
 

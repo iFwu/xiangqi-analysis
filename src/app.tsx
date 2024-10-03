@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import './app.css';
 import { ChessboardState, PieceColor, PieceName, PieceType } from './chessboard/types';
 import { detectAndExtractChessboard } from './chessboard/chessboardDetection';
@@ -18,9 +18,9 @@ export function App() {
   const [templates, setTemplates] = useState<Record<PieceName, cv.Mat> | null>(null);
   const [templatesLoaded, setTemplatesLoaded] = useState(false);
   const [fenCode, setFenCode] = useState('');
-  const overlayRef = useRef<HTMLImageElement>(null);
   const [chessboardRect, setChessboardRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [detectedPieces, setDetectedPieces] = useState<{ position: [number, number], color: PieceColor, type: PieceType | null }[]>([]);
+  const [originalImageSize, setOriginalImageSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const initializeOpenCV = async () => {
@@ -60,15 +60,17 @@ export function App() {
   };
 
   const processImage = (img: HTMLImageElement) => {
+    setOriginalImageSize({ width: img.width, height: img.height });
     const { gridCells, chessboardRect } = detectAndExtractChessboard(img);
     console.log("Original image size:", img.width, img.height);
     console.log("Detected chessboard rect:", chessboardRect);
 
+    // 确保 chessboardRect 的值在图像范围内
     const adjustedChessboardRect = {
-      x: Math.max(0, Math.min(chessboardRect.x, img.width - chessboardRect.width)),
-      y: Math.max(0, Math.min(chessboardRect.y, img.height - chessboardRect.height)),
-      width: Math.min(chessboardRect.width, img.width),
-      height: Math.min(chessboardRect.height, img.height)
+      x: Math.max(0, chessboardRect.x),
+      y: Math.max(0, chessboardRect.y),
+      width: Math.min(chessboardRect.width, img.width - chessboardRect.x),
+      height: Math.min(chessboardRect.height, img.height - chessboardRect.y)
     };
 
     console.log("Adjusted chessboard rect:", adjustedChessboardRect);
@@ -113,7 +115,11 @@ export function App() {
         <div className="content-wrapper">
           <div className="left-column">
             <ImageUploader onImageUpload={processImage} />
-            <ChessboardOverlay imageSrc={imageSrc} overlayImageSrc={overlayImageSrc} />
+            <ChessboardOverlay 
+              overlayImageSrc={overlayImageSrc} 
+              chessboardRect={chessboardRect} 
+              originalImageSize={originalImageSize}
+            />
             <FENDisplay fenCode={fenCode} onCopy={handleCopyFEN} />
           </div>
           <SolutionDisplay />
