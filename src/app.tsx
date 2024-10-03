@@ -1,19 +1,26 @@
-import { useState, useEffect } from 'preact/hooks'
-import './app.css'
-import { ChessboardState, PieceColor, PieceName, PieceType } from './chessboard/types'
+import { useState, useEffect, useRef } from 'preact/hooks';
+import './app.css';
+import { ChessboardState, PieceColor, PieceName, PieceType } from './chessboard/types';
 import { detectAndExtractChessboard } from './chessboard/chessboardDetection';
 import { detectPieceInCell, detectPieceColor, processPiece } from './chessboard/pieceDetection';
 import { createOverlayImage } from './chessboard/overlayCreation';
 import { preprocessAllTemplates, templateMatchingForPiece } from './chessboard/templateMatching';
 import cv from "@techstark/opencv-js";
+import { ImageUploader } from './components/ImageUploader';
+import { ChessboardOverlay } from './components/ChessboardOverlay';
+import { FENDisplay } from './components/FENDisplay';
+import { SolutionDisplay } from './components/SolutionDisplay';
 
 export function App() {
-  const [imageSrc, setImageSrc] = useState('')
-  const [overlayImageSrc, setOverlayImageSrc] = useState('')
-  const [chessboardState, setChessboardState] = useState<ChessboardState | null>(null)
-  const [templates, setTemplates] = useState<Record<PieceName, cv.Mat> | null>(null)
-  const [templatesLoaded, setTemplatesLoaded] = useState(false)
-  const [fenCode, setFenCode] = useState('')
+  const [imageSrc, setImageSrc] = useState('');
+  const [overlayImageSrc, setOverlayImageSrc] = useState('');
+  const [chessboardState, setChessboardState] = useState<ChessboardState | null>(null);
+  const [templates, setTemplates] = useState<Record<PieceName, cv.Mat> | null>(null);
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
+  const [fenCode, setFenCode] = useState('');
+  const overlayRef = useRef<HTMLImageElement>(null);
+  const [chessboardRect, setChessboardRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [detectedPieces, setDetectedPieces] = useState<{ position: [number, number], color: PieceColor, type: PieceType | null }[]>([]);
 
   useEffect(() => {
     const initializeOpenCV = async () => {
@@ -49,28 +56,24 @@ export function App() {
       setImageSrc(img.src);
       processImage(img);
     };
-    img.src = "/chessboard2.png"
+    img.src = "/chessboard2.png";
   };
-
-  const handleImageUpload = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const img = new Image()
-        img.onload = () => {
-          setImageSrc(img.src)
-          processImage(img);
-        }
-        img.src = e.target?.result as string
-      }
-      reader.readAsDataURL(file)
-    }
-  }
 
   const processImage = (img: HTMLImageElement) => {
     const { gridCells, chessboardRect } = detectAndExtractChessboard(img);
-    console.log("Detected chessboard rect:", chessboardRect);  // 添加这行日志
+    console.log("Original image size:", img.width, img.height);
+    console.log("Detected chessboard rect:", chessboardRect);
+
+    const adjustedChessboardRect = {
+      x: Math.max(0, Math.min(chessboardRect.x, img.width - chessboardRect.width)),
+      y: Math.max(0, Math.min(chessboardRect.y, img.height - chessboardRect.height)),
+      width: Math.min(chessboardRect.width, img.width),
+      height: Math.min(chessboardRect.height, img.height)
+    };
+
+    console.log("Adjusted chessboard rect:", adjustedChessboardRect);
+    setChessboardRect(adjustedChessboardRect);
+
     const detectedPieces: { position: [number, number], color: PieceColor, type: PieceType | null }[] = [];
 
     gridCells.forEach((cell, index) => {
@@ -92,13 +95,14 @@ export function App() {
       }
     });
 
+    setDetectedPieces(detectedPieces);
     const overlayCanvas = createOverlayImage(img, chessboardRect, detectedPieces);
     setOverlayImageSrc(overlayCanvas.toDataURL());
   };
 
   const handleCopyFEN = () => {
     navigator.clipboard.writeText(fenCode);
-  }
+  };
 
   return (
     <div className="app-container">
@@ -107,45 +111,17 @@ export function App() {
       </header>
       <main>
         <div className="content-wrapper">
-          <section className="upload-section">
-            <h2>上传图片</h2>
-            <input type="file" onChange={handleImageUpload} />
-          </section>
-          <section className="result-section">
-            <h2>分析结果</h2>
-            {imageSrc && (
-              <div className="image-container">
-                <img src={imageSrc} alt="上传的图片" className="original-image" />
-                {overlayImageSrc && (
-                  <img
-                    src={overlayImageSrc}
-                    alt="分析结果"
-                    className="overlay-image"
-                  />
-                )}
-              </div>
-            )}
-          </section>
-        </div>
-        <div className="fen-section">
-          <h2>FEN代码</h2>
-          <div className="fen-container">
-            <input type="text" value={fenCode} readOnly />
-            <button onClick={handleCopyFEN}>复制</button>
+          <div className="left-column">
+            <ImageUploader onImageUpload={processImage} />
+            <ChessboardOverlay imageSrc={imageSrc} overlayImageSrc={overlayImageSrc} />
+            <FENDisplay fenCode={fenCode} onCopy={handleCopyFEN} />
           </div>
-        </div>
-        <div className="solution-section">
-          <h2>解法展示</h2>
-          <canvas id="solutionCanvas" width="300" height="300"></canvas>
-          <div className="solution-controls">
-            <button>上一步</button>
-            <button>下一步</button>
-          </div>
+          <SolutionDisplay />
         </div>
       </main>
       <footer>
         <p>© 2023 象棋棋盘识别与分析系统</p>
       </footer>
     </div>
-  )
+  );
 }

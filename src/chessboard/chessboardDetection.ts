@@ -52,7 +52,7 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   kernel.delete(); dilatedEdges.delete(); finalEdges.delete();
   contours.delete(); hierarchy.delete(); croppedRegion.delete();
 
-  // 修改返回值，使用扩展后的矩形
+  // 确保 rect 和 expandedRect 的计算是正确的
   return {
     gridCells,
     chessboardRect: {
