@@ -1,0 +1,49 @@
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.preact:hover {
+  filter: drop-shadow(0 0 2em #673ab8aa);
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.detected-pieces {
+  margin-top: 20px;
+}
+
+.piece-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+}
+
+.piece-item {
+  text-align: center;
+}
+
+.piece-item img {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.piece-item p {
+  margin: 5px 0;
+  font-size: 12px;
+}
