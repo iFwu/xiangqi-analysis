@@ -13,7 +13,6 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
   const stddev = new cv.Mat();
   cv.meanStdDev(grayCell, mean, stddev);
   const contrast = stddev.doubleAt(0, 0);
-  console.log(`检测棋子对比度: ${contrast}`);
   // 清理内存
   mat.delete(); grayCell.delete(); mean.delete(); stddev.delete();
   return contrast > contrastThreshold;
@@ -21,27 +20,10 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
 
 // 检测棋子的颜色
 export function detectPieceColor(cellImage: ImageData, index: number): PieceColor {
-  console.log(`开始检测格子 ${index} 的棋子颜色`);
   const hsvImage = convertToHSV(cellImage);
-  console.log('HSV 转换完成');
-
-  // 显示原始图像
-  displayImage('Original Cell Image', cellImage, index);
 
   const redMask = createColorMask(hsvImage, [0, 120, 120], [10, 255, 255], [160, 120, 120], [179, 255, 255]);
-  console.log('红色掩码创建完成');
   const blackMask = createColorMask(hsvImage, [0, 0, 0], [180, 255, 80]);
-  console.log('黑色掩码创建完成');
-
-  // 显示红色和黑色掩码
-  displayImage('Red Mask', redMask, index);
-  displayImage('Black Mask', blackMask, index);
-
-  // 应用掩码到原始图像
-  const maskedRed = applyMask(cellImage, redMask);
-  const maskedBlack = applyMask(cellImage, blackMask);
-  displayImage('Masked Red Image', maskedRed, index);
-  displayImage('Masked Black Image', maskedBlack, index);
 
   const totalPixels = cellImage.width * cellImage.height;
   const redPixels = cv.countNonZero(redMask);
@@ -49,41 +31,31 @@ export function detectPieceColor(cellImage: ImageData, index: number): PieceColo
   const redRatio = redPixels / totalPixels;
   const blackRatio = blackPixels / totalPixels;
 
-  console.log(`红色比例: ${redRatio}, 黑色比例: ${blackRatio}`);
-
   // 清理内存
   hsvImage.delete();
   redMask.delete();
   blackMask.delete();
 
   if (redRatio > 0.05) {
-    console.log('检测到红色棋子');
     return 'red';
   } else if (blackRatio > 0.05) {
-    console.log('检测到黑色棋子');
     return 'black';
   }
-  console.log('未检测到棋子');
   return 'unknown';
 }
 
 // 处理棋子图像
 export function processPiece(cellImage: ImageData, pieceColor: PieceColor): ImageData {
-  console.log(`处理棋子，颜色: ${pieceColor}`);
   let mask: cv.Mat;
   if (pieceColor === 'red') {
     mask = extractRedPieceMask(cellImage);
-    console.log('提取红色棋子掩码完成');
   } else if (pieceColor === 'black') {
     mask = extractBlackPieceMask(cellImage);
-    console.log('提取黑色棋子掩码完成');
   } else {
-    console.log('未知颜色，返回原始图像');
     return cellImage;
   }
 
   const processedMat = extractLargestContourRegion(mask);
-  console.log(`处理后的图像尺寸: ${processedMat.cols}x${processedMat.rows}`);
 
   // 确保处理后的图像是 4 通道的
   let processedMatRGBA = new cv.Mat();
@@ -105,6 +77,7 @@ export function processPiece(cellImage: ImageData, pieceColor: PieceColor): Imag
   // 清理内存
   mask.delete();
   processedMat.delete();
+  processedMatRGBA.delete();
 
   return processedImageData;
 }
@@ -129,7 +102,6 @@ function extractBlackPieceMask(cellImage: ImageData): cv.Mat {
 function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   // 保留原始掩码图像
   const originalMask = maskImage.clone();
-  console.log(`提取最大轮廓区域，输入图像尺寸: ${maskImage.cols}x${maskImage.rows}`);
 
   // 形态学闭操作
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
@@ -140,10 +112,7 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   const hierarchy = new cv.Mat();
   cv.findContours(maskImage, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-  console.log(`找到 ${contours.size()} 个轮廓`);
-
   if (contours.size() === 0) {
-    console.log("未找到任何轮廓。");
     // 清理内存
     kernel.delete(); contours.delete(); hierarchy.delete();
     return originalMask;
@@ -169,7 +138,6 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   }
 
   if (validContours.length === 0) {
-    console.log("没有找到符合条件的轮廓。");
     // 清理内存
     kernel.delete(); contours.delete(); hierarchy.delete();
     return originalMask;
@@ -180,11 +148,8 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   const bestContour = validContours[0];
   const { x, y, width, height } = bestContour.rect;
 
-  console.log(`最大轮廓区域: x=${x}, y=${y}, width=${width}, height=${height}`);
-
   // 使用原始掩码图像进行裁剪，返回结果
   const croppedImage = originalMask.roi(new cv.Rect(x, y, width, height));
-  console.log(`裁剪后的图像尺寸: ${croppedImage.cols}x${croppedImage.rows}`);
 
   // 清理内存
   kernel.delete(); contours.delete(); hierarchy.delete();
@@ -224,45 +189,4 @@ function createColorMask(hsvImage: cv.Mat, lower1: number[], upper1: number[], l
     return combinedMask;
   }
   return mask1;
-}
-
-// 显示图像的辅助函数
-function displayImage(title: string, image: cv.Mat | ImageData, index: number) {
-  console.log(`%c${title} (格子 ${index}):`, 'color: blue; font-weight: bold;');
-
-  const canvas = document.createElement('canvas');
-  if (image instanceof cv.Mat) {
-    canvas.width = image.cols;
-    canvas.height = image.rows;
-    cv.imshow(canvas, image);
-  } else {
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const ctx = canvas.getContext('2d');
-    ctx?.putImageData(image, 0, 0);
-  }
-
-  const dataUrl = canvas.toDataURL();
-
-  console.log('%c ', `
-    font-size: 1px;
-    padding: ${canvas.height / 2}px ${canvas.width / 2}px;
-    background: url(${dataUrl}) no-repeat;
-    background-size: ${canvas.width}px ${canvas.height}px;
-  `);
-}
-
-// 应用掩码到原始图像的辅助函数
-function applyMask(originalImage: ImageData, mask: cv.Mat): ImageData {
-  const originalMat = cv.matFromImageData(originalImage);
-  const result = new cv.Mat();
-  cv.bitwise_and(originalMat, originalMat, result, mask);
-  const processedImageData = new ImageData(
-    new Uint8ClampedArray(result.data),
-    result.cols,
-    result.rows
-  );
-  originalMat.delete();
-  result.delete();
-  return processedImageData;
 }
