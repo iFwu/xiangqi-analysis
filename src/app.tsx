@@ -52,7 +52,7 @@ export function App() {
     console.log(`开始检测棋子，共 ${cells.length} 个格子`);
     const detectedPieces: { image: string, color: PieceColor }[] = [];
     let processedCount = 0;
-    const maxProcessCount = 5; // 设置要处理的最大格子数
+    const maxProcessCount = 40; // 设置要处理的最大格子数
 
     cells.forEach((cell, index) => {
       if (processedCount >= maxProcessCount) return;
