@@ -70,7 +70,7 @@ export function App() {
     img.onload = () => {
       processImage(img, templates);
     };
-    img.src = "/test.png";
+    img.src = `${import.meta.env.BASE_URL}test.png`;
   };
 
   const processImage = (img: HTMLImageElement, templates: Record<PieceName, cv.Mat>) => {
