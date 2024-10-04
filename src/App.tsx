@@ -48,7 +48,7 @@ export function App() {
     height: number;
   }>();
   // 从 localStorage 加载初始深度值
-  const initialDepth = Number(localStorage.getItem('depth')) || 10;
+  const initialDepth = Number(localStorage.getItem('depth')) || 15;
   const [depth, setDepth] = useState(initialDepth);
 
   // Initialize OpenCV and Chess Engine
