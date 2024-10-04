@@ -1,5 +1,3 @@
-import { h } from 'preact';
-
 interface ImageUploaderProps {
   onImageUpload: (img: HTMLImageElement) => void;
 }

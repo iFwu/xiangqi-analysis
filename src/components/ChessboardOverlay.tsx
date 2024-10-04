@@ -2,16 +2,16 @@ import './ChessboardOverlay.css';
 
 interface ChessboardOverlayProps {
   overlayImageSrc: string;
-  chessboardRect: { x: number; y: number; width: number; height: number };
-  originalImageSize: { width: number; height: number };
+  chessboardRect?: { x: number; y: number; width: number; height: number };
+  originalImageSize?: { width: number; height: number };
 }
 
 const MAX_WIDTH = 400; // 在 JavaScript 中定义 max-width
 
 export function ChessboardOverlay({
   overlayImageSrc,
-  chessboardRect,
-  originalImageSize,
+  chessboardRect = { x: 0, y: 0, width: 0, height: 0 },
+  originalImageSize = { width: 0, height: 0 },
 }: ChessboardOverlayProps) {
   // 添加间隙
   const padding = 15;

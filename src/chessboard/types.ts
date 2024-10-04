@@ -1,7 +1,3 @@
-export interface ChessboardState {
-  fen: string;
-}
-
 export interface AnalysisResult {
   fen: string;
   pieceLayout: string[][];

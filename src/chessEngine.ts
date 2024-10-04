@@ -43,7 +43,16 @@ export class ChessEngine {
 
     return new Promise((resolve, reject) => {
       try {
-        this.currentResolve = resolve;
+        this.currentResolve = (value: string) => {
+          if (value === '(none)') {
+            // 检查是哪一方获胜
+            const fenParts = fen.split(' ');
+            const sideToMove = fenParts[1];
+            resolve(sideToMove === 'w' ? 'red_wins' : 'black_wins');
+          } else {
+            resolve(value);
+          }
+        };
         this.engineInstance.send_command(`position fen ${fen}`);
         this.engineInstance.send_command('go depth 10');
 

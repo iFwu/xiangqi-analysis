@@ -16,7 +16,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'pikafish': 'src/pikafish.js'
+      'pikafish': 'third_party/pikafish.js'
     },
   },
   optimizeDeps: {

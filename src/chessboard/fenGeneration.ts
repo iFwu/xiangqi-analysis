@@ -14,7 +14,7 @@ function mapPieceTypeToFEN(pieceType: PieceType, color: PieceColor): string {
   return mapping[pieceType];
 }
 
-export function generateFenFromPieces(pieceLayout: string[][], includeSuffix: boolean): string {
+export function generateFenFromPieces(pieceLayout: string[][], nextMoveColor: PieceColor = 'red'): string {
   const fenRows: string[] = [];
 
   for (const row of pieceLayout) {
@@ -43,7 +43,9 @@ export function generateFenFromPieces(pieceLayout: string[][], includeSuffix: bo
   }
 
   const fenString = fenRows.join('/');
-  console.log(`Generated FEN: ${fenString}`);
+  const nextMove = nextMoveColor === 'red' ? 'w' : 'b';
+  const fullFenString = `${fenString} ${nextMove} - - 0 1`;
+  console.log(`Generated FEN: ${fullFenString}`);
 
-  return includeSuffix ? `${fenString} w - - 0 1` : fenString;
+  return fullFenString;
 }
