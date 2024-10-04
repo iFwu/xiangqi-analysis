@@ -18,7 +18,7 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
 
   const loadImage = async (pieceType: PieceName): Promise<cv.Mat | null> => {
     try {
-      const response = await fetch(`/chess_templates/${pieceType}.png`);
+      const response = await fetch(`${import.meta.env.BASE_URL}chess_templates/${pieceType}.png`);
       if (!response.ok) {
         console.error(`Failed to fetch image for ${pieceType}: ${response.statusText}`);
         return null;
@@ -43,7 +43,7 @@ export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60
       gray.delete();
       return preprocessed;
     } catch (error) {
-      console.error(`Error processing template for ${pieceType}:`, error);
+      console.error(`Error fetching image for ${pieceType}:`, error);
       return null;
     }
   };
