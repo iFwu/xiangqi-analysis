@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import './app.css';
 import { ChessboardState, PieceColor, PieceName, PieceType } from './chessboard/types';
 import { detectAndExtractChessboard } from './chessboard/chessboardDetection';
@@ -11,6 +11,8 @@ import { ChessboardOverlay } from './components/ChessboardOverlay';
 import { FENDisplay } from './components/FENDisplay';
 import { SolutionDisplay } from './components/SolutionDisplay';
 import { generateFenFromPieces } from './chessboard/fenGeneration';
+import { ChessEngine } from './chessEngine';
+import { updateFEN, decodeBestMove } from './chessboard/fenUpdate';
 
 export function App() {
   const [imageSrc, setImageSrc] = useState('');
@@ -23,6 +25,11 @@ export function App() {
   const [detectedPieces, setDetectedPieces] = useState<{ position: [number, number], color: PieceColor, type: PieceType | null }[]>([]);
   const [originalImageSize, setOriginalImageSize] = useState({ width: 0, height: 0 });
   const [includeFenSuffix, setIncludeFenSuffix] = useState(true);
+  const [engine, setEngine] = useState<ChessEngine | null>(null);
+  const [bestMove, setBestMove] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [moveHistory, setMoveHistory] = useState<string[]>([]);
 
   useEffect(() => {
     const initializeOpenCV = async () => {
@@ -44,6 +51,14 @@ export function App() {
     };
 
     initializeOpenCV();
+
+    // 初始化象棋引擎
+    const newEngine = new ChessEngine();
+    newEngine.initEngine().then(() => setEngine(newEngine));
+
+    return () => {
+      // 清理逻辑（如果需要）
+    };
   }, []);
 
   useEffect(() => {
@@ -58,7 +73,7 @@ export function App() {
       setImageSrc(img.src);
       processImage(img);
     };
-    img.src = "/chessboard2.png";
+    img.src = "/test.png";
   };
 
   const processImage = (img: HTMLImageElement) => {
@@ -116,12 +131,41 @@ export function App() {
     console.table(pieceLayout);
 
     const fenCode = generateFenFromPieces(pieceLayout, includeFenSuffix);
+    console.log('Generated FEN:', fenCode);
     setFenCode(fenCode);
+
+    // 在生成 FEN 后立即获取最佳走法
+    if (engine) {
+      fetchBestMove(fenCode);
+    }
   };
 
   const handleCopyFEN = () => {
     navigator.clipboard.writeText(fenCode);
   };
+
+  const fetchBestMove = useCallback(async (fen: string) => {
+    if (!engine) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const move = await engine.getBestMove(fen);
+      setBestMove(move);
+      const newFen = updateFEN(fen, move);
+      setFenCode(newFen);
+      setMoveHistory(prev => [...prev, move]);
+    } catch (err: any) {
+      setError(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [engine]);
+
+  const handleNextMove = useCallback(() => {
+    if (fenCode) {
+      fetchBestMove(fenCode);
+    }
+  }, [fenCode, fetchBestMove]);
 
   return (
     <div className="app-container">
@@ -144,7 +188,14 @@ export function App() {
               includeSuffix={includeFenSuffix}
             />
           </div>
-          <SolutionDisplay />
+          <SolutionDisplay 
+            bestMove={bestMove}
+            loading={loading}
+            error={error}
+            onNextMove={handleNextMove}
+            moveHistory={moveHistory}
+            fenCode={fenCode}  // 新增这一行
+          />
         </div>
       </main>
       <footer>

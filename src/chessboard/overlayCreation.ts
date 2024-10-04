@@ -2,7 +2,7 @@ import { PieceColor, PieceName, PieceType } from './types';
 
 const pieceTypeToChineseChar: Record<PieceName, string> = {
   'red_king': '帥', 'red_guard': '仕', 'red_bishop': '相', 'red_knight': '馬', 'red_rook': '車', 'red_cannon': '炮', 'red_pawn': '兵',
-  'black_king': '將', 'black_guard': '士', 'black_bishop': '象', 'black_knight': '馬', 'black_rook': '車', 'black_cannon': '炮', 'black_pawn': '卒',
+  'black_king': '将', 'black_guard': '士', 'black_bishop': '象', 'black_knight': '馬', 'black_rook': '車', 'black_cannon': '炮', 'black_pawn': '卒',
 };
 
 export function createOverlayImage(

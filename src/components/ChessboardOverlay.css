@@ -1,0 +1,17 @@
+.result-section {
+  box-sizing: border-box;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.overlay-image {
+  position: absolute;
+  top: 0;
+}

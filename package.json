@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "preact": "^10.24.1",
     "@techstark/opencv-js": "^4.10.0-release.1",
-    "ml-kmeans": "^6.0.0"
+    "ml-kmeans": "^6.0.0",
+    "preact": "^10.24.1"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.1",
