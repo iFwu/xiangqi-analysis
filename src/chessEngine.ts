@@ -36,7 +36,7 @@ export class ChessEngine {
     }
   }
 
-  async getBestMove(fen: string): Promise<string> {
+  async getBestMove(fen: string, depth: number = 14): Promise<string> {
     if (!this.engineReady) {
       throw new Error('Engine is not ready');
     }
@@ -45,17 +45,15 @@ export class ChessEngine {
       try {
         this.currentResolve = (value: string) => {
           if (value === '(none)') {
-            // 检查是哪一方获胜
             const fenParts = fen.split(' ');
             const sideToMove = fenParts[1];
-            resolve(sideToMove === 'w' ? 'red_wins' : 'black_wins');
+            resolve(sideToMove === 'b' ? 'red_wins' : 'black_wins');
           } else {
             resolve(value);
           }
         };
         this.engineInstance.send_command(`position fen ${fen}`);
-        this.engineInstance.send_command('go depth 10');
-
+        this.engineInstance.send_command(`go depth ${depth}`);
         setTimeout(() => {
           if (this.currentResolve) {
             reject(new Error('Engine timeout'));

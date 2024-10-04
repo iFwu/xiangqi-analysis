@@ -91,14 +91,12 @@ export function updateFEN(fen: string, move: string): string {
 
 export function moveToChineseNotation(fen: string, move: string): string {
   const pieceSymbols: { [key: string]: string } = {
-      'K': '帅', 'A': '仕', 'B': '相', 'N': '马', 'R': '车', 'C': '炮', 'P': '兵',
-      'k': '将', 'a': '士', 'b': '象', 'n': '马', 'r': '车', 'c': '炮', 'p': '卒',
+    'K': '帅', 'A': '仕', 'B': '相', 'N': '马', 'R': '车', 'C': '炮', 'P': '兵',
+    'k': '将', 'a': '士', 'b': '象', 'n': '马', 'r': '车', 'c': '炮', 'p': '卒',
   };
 
   const files = 'abcdefghi';
   const chineseNumbers = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  const chineseFilesRed = ['九', '八', '七', '六', '五', '四', '三', '二', '一'];
-  const chineseFilesBlack = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
 
   // 解析 FEN，构建棋盘
   const [board_fen] = fen.trim().split(/\s+/);
@@ -106,16 +104,16 @@ export function moveToChineseNotation(fen: string, move: string): string {
   const board: (string | null)[][] = [];
 
   for (const rank_str of fen_ranks) {
-      const row: (string | null)[] = [];
-      for (const c of rank_str) {
-          if (c >= '1' && c <= '9') {
-              const empty_squares = parseInt(c, 10);
-              for (let j = 0; j < empty_squares; j++) row.push(null);
-          } else {
-              row.push(c);
-          }
+    const row: (string | null)[] = [];
+    for (const c of rank_str) {
+      if (c >= '1' && c <= '9') {
+        const empty_squares = parseInt(c, 10);
+        for (let j = 0; j < empty_squares; j++) row.push(null);
+      } else {
+        row.push(c);
       }
-      board.push(row);
+    }
+    board.push(row);
   }
 
   // 解析 UCCI 格式的走棋
@@ -134,34 +132,30 @@ export function moveToChineseNotation(fen: string, move: string): string {
 
   const isRed = piece >= 'A' && piece <= 'Z';
   const pieceName = pieceSymbols[piece];
-  const chineseFiles = isRed ? chineseFilesRed : chineseFilesBlack;
 
-  // 获取中文列表示
-  const from_file_chinese = chineseFiles[from_file];
-  const to_file_chinese = chineseFiles[to_file];
+  // 获取列表示
+  const fileNumber = isRed ? chineseNumbers[9 - from_file] : ` ${from_file + 1} `;
 
   // 判断移动方向和步数
   let action = '';
   let actionNumber = '';
 
-  // 处理马、象、士，不使用“平”，而是显示其移动的目标纵线
-  if (pieceName === '马' || pieceName === '象' || pieceName === '仕' || pieceName === '士') {
-      action = from_rank > to_rank ? '进' : '退';
-      actionNumber = to_file_chinese;
-  } else if (from_file === to_file) {
-      // 直走，进或退
-      if (isRed) {
-          action = from_rank > to_rank ? '进' : '退'; // 红方的进是向下走
-      } else {
-          action = from_rank > to_rank ? '退' : '进'; // 黑方的进是向上走
-      }
-      actionNumber = chineseNumbers[Math.abs(from_rank - to_rank)];
+  if (from_file === to_file) {
+    // 直走，进或退
+    action = isRed ? (from_rank > to_rank ? '进' : '退') : (from_rank < to_rank ? '进' : '退');
+    actionNumber = isRed ? chineseNumbers[Math.abs(from_rank - to_rank)] : ` ${Math.abs(from_rank - to_rank)} `;
   } else {
-      // 横走，平
-      action = '平';
-      actionNumber = to_file_chinese;
+    // 横走或斜走
+    action = '平';
+    actionNumber = isRed ? chineseNumbers[9 - to_file] : ` ${to_file + 1} `;
+  }
+
+  // 处理特殊情况：马、象、士的移动
+  if (pieceName === '马' || pieceName === '象' || pieceName === '相' || pieceName === '仕' || pieceName === '士') {
+    action = isRed ? (from_rank > to_rank ? '进' : '退') : (from_rank < to_rank ? '进' : '退');
+    actionNumber = isRed ? chineseNumbers[9 - to_file] : ` ${to_file + 1} `;
   }
 
   // 构建中文走棋表示
-  return `${pieceName}${from_file_chinese}${action}${actionNumber}`;
+  return `${pieceName}${fileNumber}${action}${actionNumber}`;
 }

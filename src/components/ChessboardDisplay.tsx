@@ -149,7 +149,7 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     function drawCrosshair(x: number, y: number, isEdge: boolean = false) {
       if (!ctx) return;
       const size = cellSize * 0.15;
-      const offset = - cellSize * 0.25; // 移动距离
+      const offset = -cellSize * 0.25; // 移动距离
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.lineWidth = 1;
 
@@ -195,24 +195,25 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     // 绘制兵（卒）的准星
     for (let i = 0; i < 5; i++) {
       const isEdge = i === 0 || i === 4;
-      drawCrosshair((2 * i) * cellSize + margin, 3 * cellSize + margin, isEdge);
-      drawCrosshair((2 * i) * cellSize + margin, 6 * cellSize + margin, isEdge);
+      drawCrosshair(2 * i * cellSize + margin, 3 * cellSize + margin, isEdge);
+      drawCrosshair(2 * i * cellSize + margin, 6 * cellSize + margin, isEdge);
     }
 
     // 绘制坐标标记
     ctx.font = '14px Arial';
-    ctx.fillStyle = '#000';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 绘制列标记 (a-i)
-    for (let i = 0; i < 9; i++) {
-      ctx.fillText(String.fromCharCode(97 + i), i * cellSize + margin, boardHeight - margin / 2);
-    }
+    // 使用半透明的黑色来绘制标记
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; // 0.3 是透明度，可以根据需要调整
 
-    // 绘制行标记 (0-9)
-    for (let i = 0; i < 10; i++) {
-      ctx.fillText((9 - i).toString(), margin / 2, i * cellSize + margin);
+    // 绘制红方（下方）列标记，从右到左
+    const redColumns = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+    for (let i = 0; i < 9; i++) {
+      ctx.fillText(redColumns[i], (8 - i) * cellSize + margin, boardHeight - margin / 2);
+    }
+    for (let i = 0; i < 9; i++) {
+      ctx.fillText((9 - i).toString(), (8 - i) * cellSize + margin, margin / 2);
     }
 
     // 绘制棋子
@@ -242,11 +243,15 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
 
           // 绘制棋子文字
           ctx.fillStyle = piece.color === 'red' ? '#c00000' : '#000000';
-          ctx.font = 'bold 25px "LiSu", "隶书", "STKaiti", "楷体", "KaiTi", "SimKai", sans-serif';
+          ctx.font =
+            'bold 25px "LiSu", "隶书", "STKaiti", "楷体", "KaiTi", "SimKai", sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           const pieceChar = piece.type.toUpperCase();
-          const pieceSymbol = piece.color === 'red' ? pieceMap[pieceChar] : pieceMap[pieceChar.toLowerCase()];
+          const pieceSymbol =
+            piece.color === 'red'
+              ? pieceMap[pieceChar]
+              : pieceMap[pieceChar.toLowerCase()];
           ctx.fillText(pieceSymbol, centerX, centerY - radius * 0.12);
         }
       });
