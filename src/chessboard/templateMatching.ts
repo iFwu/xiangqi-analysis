@@ -1,59 +1,35 @@
 import cv from "@techstark/opencv-js";
 import { PieceType, PieceColor, PieceName } from './types';
 
+// 使用 import.meta.glob 预加载所有模板图片
+const templateImages = import.meta.glob('/assets/chess_templates/*.png', { eager: true });
+
 // 预处理模板图像
-function preprocessTemplateImage(templateImage: cv.Mat, cellSize: [ number, number ]): cv.Mat {
+function preprocessTemplateImage(templateImage: cv.Mat, cellSize: [number, number]): cv.Mat {
   const resizedTemplate = new cv.Mat();
-  cv.resize(templateImage, resizedTemplate, new cv.Size(cellSize[ 0 ], cellSize[ 1 ]));
+  cv.resize(templateImage, resizedTemplate, new cv.Size(cellSize[0], cellSize[1]));
   return resizedTemplate;
 }
 
 // 预处理所有模板
-export async function preprocessAllTemplates(cellSize: [ number, number ] = [ 60, 60 ]): Promise<Record<PieceName, cv.Mat>> {
+export async function preprocessAllTemplates(cellSize: [number, number] = [60, 60]): Promise<Record<PieceName, cv.Mat>> {
   const templates: Partial<Record<PieceName, cv.Mat>> = {};
-  const pieceTypes: PieceName[] = [
-    'red_king', 'red_guard', 'red_bishop', 'red_knight', 'red_rook', 'red_cannon', 'red_pawn',
-    'black_king', 'black_guard', 'black_bishop', 'black_knight', 'black_rook', 'black_cannon', 'black_pawn'
-  ];
 
-  const loadImage = async (pieceType: PieceName): Promise<cv.Mat | null> => {
-    try {
-      const response = await fetch(`${import.meta.env.BASE_URL}chess_templates/${pieceType}.png`);
-      if (!response.ok) {
-        console.error(`Failed to fetch image for ${pieceType}: ${response.statusText}`);
-        return null;
-      }
-      const blob = await response.blob();
-      const imageBitmap = await createImageBitmap(blob);
-      const canvas = document.createElement('canvas');
-      canvas.width = imageBitmap.width;
-      canvas.height = imageBitmap.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        console.error(`Failed to get 2D context for ${pieceType}`);
-        return null;
-      }
-      ctx.drawImage(imageBitmap, 0, 0);
-
-      const src = cv.imread(canvas);
+  for (const [path, module] of Object.entries(templateImages)) {
+    const pieceName = path.split('/').pop()?.split('.')[0] as PieceName;
+    if (pieceName) {
+      const img = new Image();
+      img.src = (module as { default: string }).default;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const src = cv.imread(img);
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
       const preprocessed = preprocessTemplateImage(gray, cellSize);
+      templates[pieceName] = preprocessed;
       src.delete();
       gray.delete();
-      return preprocessed;
-    } catch (error) {
-      console.error(`Error fetching image for ${pieceType}:`, error);
-      return null;
-    }
-  };
-
-  for (const pieceType of pieceTypes) {
-    const template = await loadImage(pieceType);
-    if (template) {
-      templates[ pieceType ] = template;
-    } else {
-      console.warn(`Failed to load template for ${pieceType}`);
     }
   }
 
