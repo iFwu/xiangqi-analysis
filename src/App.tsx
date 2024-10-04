@@ -59,19 +59,19 @@ export function App() {
   }, []);
 
   // Process image when both templates and engine are ready
-  useEffect(() => {
-    if (templates && engine) {
-      loadAndProcessDebugImage(templates);
-    }
-  }, [templates, engine]);
+  // useEffect(() => {
+  //   if (templates && engine) {
+  //     loadAndProcessDebugImage(templates);
+  //   }
+  // }, [templates, engine]);
 
-  const loadAndProcessDebugImage = (templates: Record<PieceName, cv.Mat>) => {
-    const img = new Image();
-    img.onload = () => {
-      processImage(img, templates);
-    };
-    img.src = `${import.meta.env.BASE_URL}test.png`;
-  };
+  // const loadAndProcessDebugImage = (templates: Record<PieceName, cv.Mat>) => {
+  //   const img = new Image();
+  //   img.onload = () => {
+  //     processImage(img, templates);
+  //   };
+  //   img.src = `${import.meta.env.BASE_URL}test.png`;
+  // };
 
   const processImage = (img: HTMLImageElement, templates: Record<PieceName, cv.Mat>) => {
     setOriginalImageSize({ width: img.width, height: img.height });
