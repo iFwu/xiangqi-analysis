@@ -1,6 +1,15 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 
+declare const process: {
+  env: {
+    GITHUB_PAGES?: string;
+  };
+};
+
+// 检查是否是 GitHub Pages 环境
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+
 export default defineConfig({
   plugins: [ preact() ],
   server: {
@@ -22,4 +31,6 @@ export default defineConfig({
   optimizeDeps: {
     include: [ 'pikafish' ],
   },
+  // 根据环境动态设置 base
+  base: isGitHubPages ? '/xiangqi-analysis/' : '/',
 });
