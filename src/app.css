@@ -108,27 +108,50 @@ main {
 
 .content-wrapper {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 2rem;
   width: 100%;
-  max-width: 850px;
-  margin: 0 auto 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 0 1rem;
   box-sizing: border-box;
 }
 
-.left-column {
+.left-column,
+.right-column {
+  width: 100%;
+}
+
+.solution-section,
+.upload-section,
+.board-result-section,
+.fen-section,
+.depth-control-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.solution-column,
+.image-column {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.upload-section, .result-section, .fen-section {
+.solution-section,
+.upload-section,
+.board-result-section,
+.depth-control-section,
+.fen-section {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .solution-section {
@@ -204,6 +227,38 @@ footer {
   color: #ecf0f1;
 }
 
+@media (max-width: 768px) {
+  .content-wrapper {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .left-column,
+  .right-column {
+    width: 100%;
+  }
+
+  .solution-section {
+    order: 1;
+  }
+
+  .upload-section {
+    order: 0;
+  }
+
+  .board-result-section {
+    order: 2;
+  }
+
+  .fen-section {
+    order: 3;
+  }
+
+  .depth-control-section {
+    order: 4;
+  }
+}
+
 @media (min-width: 769px) {
   .content-wrapper {
     flex-direction: row;
@@ -211,38 +266,30 @@ footer {
   }
 
   .left-column {
-    width: 50%;
-    max-width: 600px;
+    width: calc(50% - 1rem);
+    position: sticky;
+    top: 1rem;
+    align-self: flex-start;
+  }
+
+  .right-column {
+    width: calc(50% - 1rem);
   }
 
   .solution-section {
+    height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+
+  .solution-column,
+  .image-column {
     width: 50%;
     max-width: 600px;
   }
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column;
-    padding: 0 0.5rem;
-  }
-
-  .left-column,
   .solution-section {
-    width: 100%;
+    order: -1;
   }
 
-  .chessboard {
-    max-width: 100%;
-    height: auto;
-  }
-}
-
-.result-section {
-  box-sizing: border-box;
-  max-width: 600px;
-  margin: 0 auto;
-  width: 100%;
 }
 
 .chessboard {
@@ -281,4 +328,18 @@ footer {
   background-color: #95a5a6;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.depth-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.depth-slider-container label {
+  font-weight: bold;
+}
+
+#depth-slider {
+  width: 100%;
 }

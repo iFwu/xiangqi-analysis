@@ -1,18 +1,18 @@
 import './ChessboardOverlay.css';
 
-interface ChessboardOverlayProps {
+interface BoardResultProps {
   overlayImageSrc: string;
   chessboardRect?: { x: number; y: number; width: number; height: number };
   originalImageSize?: { width: number; height: number };
 }
 
-const MAX_WIDTH = 400; // 在 JavaScript 中定义 max-width
+const MAX_WIDTH = 360; // 在 JavaScript 中定义 max-width
 
-export function ChessboardOverlay({
+export function BoardResult({
   overlayImageSrc,
   chessboardRect = { x: 0, y: 0, width: 0, height: 0 },
   originalImageSize = { width: 0, height: 0 },
-}: ChessboardOverlayProps) {
+}: BoardResultProps) {
   // 添加间隙
   const padding = 15;
 
@@ -43,7 +43,7 @@ export function ChessboardOverlay({
   const leftOffset = (finalWidth - stretchedWidth) / 2;
 
   return (
-    <section className="result-section">
+    <section className="board-result-section">
       <h2>分析结果</h2>
       <div
         className="image-container"

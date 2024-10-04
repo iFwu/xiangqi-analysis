@@ -30,6 +30,7 @@ interface Piece {
 export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
   const [board, setBoard] = useState<(Piece | null)[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     const newBoard = parseFEN(fen);
@@ -44,6 +45,22 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
       }
     }
   }, [board, bestMove]);
+
+  useEffect(() => {
+    function handleResize() {
+      if (canvasRef.current) {
+        const screenWidth = window.innerWidth;
+        const maxWidth = screenWidth * 0.8;
+        const originalWidth = 8 * 40 + 40; // 8 cells + 2 margins
+        const newScale = Math.min(1, maxWidth / originalWidth);
+        setScale(newScale);
+      }
+    }
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   function parseFEN(fen: string): (Piece | null)[][] {
     const rows = fen.split(' ')[0].split('/');
@@ -80,8 +97,13 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     const margin = cellSize / 2;
     const boardWidth = 8 * cellSize + 2 * margin;
     const boardHeight = 9 * cellSize + 2 * margin;
-    canvas.width = boardWidth;
-    canvas.height = boardHeight;
+    
+    // Set canvas size based on scale
+    canvas.width = boardWidth * scale;
+    canvas.height = boardHeight * scale;
+    
+    // Scale the context
+    ctx.scale(scale, scale);
 
     // 绘制棋盘背景
     ctx.fillStyle = '#f0d9b5';
@@ -304,5 +326,16 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     ctx.fill();
   }
 
-  return <canvas ref={canvasRef} className="chessboard"></canvas>;
+  return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <canvas 
+        ref={canvasRef} 
+        className="chessboard"
+        style={{
+          maxWidth: '80vw',
+          height: 'auto'
+        }}
+      ></canvas>
+    </div>
+  );
 }

@@ -17,7 +17,7 @@ import {
   templateMatchingForPiece,
 } from './chessboard/templateMatching';
 import { ImageUploader } from './components/ImageUploader';
-import { ChessboardOverlay } from './components/ChessboardOverlay';
+import { BoardResult } from './components/BoardResult';
 import { FENDisplay } from './components/FENDisplay';
 import { SolutionDisplay } from './components/SolutionDisplay';
 import { generateFenFromPieces } from './chessboard/fenGeneration';
@@ -188,7 +188,7 @@ export function App() {
       setLoading(true);
       setError(null);
       try {
-        const move = await engine.getBestMove(fen, depth); // 传递深度值
+        const move = await engine.getBestMove(fen, depth); // 传递度值
         setBestMove(move);
         if (move === 'red_wins' || move === 'black_wins') {
           setLoading(false);
@@ -254,39 +254,44 @@ export function App() {
       <main className="app-container">
         <div className="content-wrapper">
           <div className="left-column">
+            <SolutionDisplay
+              bestMove={bestMove}
+              loading={loading}
+              error={error}
+              onNextMove={handleNextMove}
+              onPreviousMove={handlePreviousMove}
+              moveHistory={moveHistory}
+              fenCode={fenCode}
+              fenHistory={fenHistory}
+            />
+          </div>
+          <div className="right-column">
             <ImageUploader onImageUpload={handleImageUpload} />
-            <ChessboardOverlay
+            <BoardResult
               overlayImageSrc={overlayImageSrc}
               chessboardRect={chessboardRect}
               originalImageSize={originalImageSize}
             />
             <FENDisplay fenCode={fenCode} onCopy={handleCopyFEN} />
-            <div>
-              <label htmlFor="depth-slider">搜索深度: {depth}</label>
-              <input
-                id="depth-slider"
-                type="range"
-                min="10"
-                max="30"
-                value={depth}
-                onChange={(e) => {
-                  if (e.target instanceof HTMLInputElement) {
-                    handleDepthChange(Number(e.target.value));
-                  }
-                }}
-              />
+            <div className="depth-control-section">
+              <h2>搜索深度控制</h2>
+              <div className="depth-slider-container">
+                <label htmlFor="depth-slider">当前深度: {depth}</label>
+                <input
+                  id="depth-slider"
+                  type="range"
+                  min="10"
+                  max="30"
+                  value={depth}
+                  onChange={(e) => {
+                    if (e.target instanceof HTMLInputElement) {
+                      handleDepthChange(Number(e.target.value));
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
-          <SolutionDisplay
-            bestMove={bestMove}
-            loading={loading}
-            error={error}
-            onNextMove={handleNextMove}
-            onPreviousMove={handlePreviousMove}
-            moveHistory={moveHistory}
-            fenCode={fenCode}
-            fenHistory={fenHistory}
-          />
         </div>
       </main>
       <footer>
