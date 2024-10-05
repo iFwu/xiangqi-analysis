@@ -48,7 +48,7 @@ export function App() {
     height: number;
   }>();
   // 从 localStorage 加载初始深度值
-  const initialDepth = Number(localStorage.getItem('depth')) || 15;
+  const initialDepth = Number(localStorage.getItem('depth')) || 14;
   const [depth, setDepth] = useState(initialDepth);
 
   // Initialize OpenCV and Chess Engine
@@ -295,7 +295,11 @@ export function App() {
         </div>
       </main>
       <footer>
-        <p>© 2023 象棋棋盘识别与分析系统</p>
+        <p>
+          © 2024 象棋棋盘识别与分析系统 | 
+          Powered by <a href="https://github.com/official-pikafish/Pikafish"> Pikafish</a>&nbsp;|&nbsp;
+          <a href="https://github.com/iFwu/xiangqi-analysis">GitHub 源码仓库</a>
+        </p>
       </footer>
     </>
   );

@@ -1,5 +1,3 @@
-import './ChessboardOverlay.css';
-
 interface BoardResultProps {
   overlayImageSrc: string;
   chessboardRect?: { x: number; y: number; width: number; height: number };

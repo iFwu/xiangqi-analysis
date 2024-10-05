@@ -23,8 +23,9 @@ export function SolutionDisplay({
   fenHistory,
 }: SolutionDisplayProps) {
   const currentMoveColor = moveHistory.length % 2 === 0 ? '红方' : '黑方';
+  const currentMoveNumber = moveHistory.length + 1;
 
-  // Map over moveHistory and use the correct FEN before each move
+  // Create move history items
   const moveItems = moveHistory.map((move, index) => {
     const fenBeforeMove = fenHistory[index]; // FEN before the move
     let notation = '';
@@ -35,9 +36,9 @@ export function SolutionDisplay({
       console.error(`Error converting move to notation: ${err}`);
     }
     return (
-      <li key={index}>
-        {index % 2 === 0 ? '红方' : '黑方'}: {notation}
-      </li>
+      <span key={index} className="move-item">
+        {notation}
+      </span>
     );
   });
 
@@ -49,14 +50,15 @@ export function SolutionDisplay({
       ? '黑方胜'
       : '';
 
-  // Calculate the number of moves for each side
-  const redMoves = Math.ceil(moveHistory.length / 2);
-  const blackMoves = Math.floor(moveHistory.length / 2);
-
   return (
     <div className="solution-section">
       <h2>解法展示</h2>
-      <ChessboardDisplay fen={fenCode} bestMove={isGameOver ? '' : bestMove} />
+      <div className="chessboard-display">
+        <ChessboardDisplay
+          fen={fenCode}
+          bestMove={isGameOver ? '' : bestMove}
+        />
+      </div>
       <div className="solution-controls">
         <button onClick={onPreviousMove} disabled={moveHistory.length === 0}>
           上一步
@@ -72,7 +74,11 @@ export function SolutionDisplay({
         {loading && <p>正在计算最佳走法...</p>}
         {error && <p style={{ color: 'red' }}>{error}</p>}
         {!isGameOver && bestMove && (
-          <p>最佳走法: {moveToChineseNotation(fenCode, bestMove)}</p>
+          <p>
+            {currentMoveColor}最佳走法：
+            {moveToChineseNotation(fenCode, bestMove)} （第 {currentMoveNumber}{' '}
+            步）
+          </p>
         )}
         {isGameOver && (
           <p style={{ fontWeight: 'bold', color: 'green' }}>
@@ -80,15 +86,7 @@ export function SolutionDisplay({
           </p>
         )}
       </div>
-      <div className="move-history">
-        <h3>
-          走棋历史 (红方: {redMoves}步, 黑方: {blackMoves}步)
-        </h3>
-        <ul>{moveItems}</ul>
-      </div>
-      <div className="current-move">
-        <h3>当前步: {currentMoveColor}</h3>
-      </div>
+      <div className="move-list">{moveItems}</div>
     </div>
   );
 }
