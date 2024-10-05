@@ -28,13 +28,7 @@ export function SolutionDisplay({
   // Create move history items
   const moveItems = moveHistory.map((move, index) => {
     const fenBeforeMove = fenHistory[index]; // FEN before the move
-    let notation = '';
-    try {
-      notation = moveToChineseNotation(fenBeforeMove, move);
-    } catch (err) {
-      notation = 'Error';
-      console.error(`Error converting move to notation: ${err}`);
-    }
+    const notation = moveToChineseNotation(fenBeforeMove, move);
     return (
       <span key={index} className="move-item">
         {notation}

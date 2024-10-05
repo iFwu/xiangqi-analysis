@@ -13,7 +13,7 @@ const pieceMap: { [key: string]: string } = {
   A: '仕',
   B: '相',
   N: '傌',
-  R: '車',
+  R: '俥',
   C: '炮',
   P: '兵',
 };
