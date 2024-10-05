@@ -16,7 +16,7 @@ export default defineConfig({
         {
           name: '@techstark/opencv-js',
           var: 'cv',
-          path: 'opencv.js',
+          path: 'dist/opencv.js',
         },
       ],
     }),
