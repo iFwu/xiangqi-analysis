@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
+import cdn from 'vite-plugin-cdn-import';
 
 declare const process: {
   env: {
@@ -8,7 +9,18 @@ declare const process: {
 };
 
 export default defineConfig({
-  plugins: [ preact() ],
+  plugins: [
+    preact(),
+    cdn({
+      modules: [
+        {
+          name: '@techstark/opencv-js',
+          var: 'cv',
+          path: 'opencv.js',
+        },
+      ],
+    }),
+  ],
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
@@ -26,7 +38,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [ 'pikafish' ],
+    include: ['pikafish'],
   },
   // 根据环境动态设置 base
   base: process.env.GITHUB_PAGES === 'true' ? '/xiangqi-analysis/' : '/',
