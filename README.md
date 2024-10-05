@@ -29,7 +29,7 @@
 1. 克隆仓库：
 
 ```
-git clone https://github.com/your-username/xiangqi-analysis.git
+git clone https://github.com/iFwu/xiangqi-analysis.git
 cd xiangqi-analysis
 ```
 
@@ -47,18 +47,10 @@ pnpm dev
 
 4. 在浏览器中打开 `http://localhost:5173` 查看应用
 
-## 构建和部署
-
-1. 构建项目：
+## 构建
 
 ```
 pnpm build
-```
-
-2. 部署到 GitHub Pages：
-
-```
-pnpm deploy
 ```
 
 注意：本项目使用 GitHub Actions 进行自动部署。每次推送到主分支时，都会触发构建和部署流程。
@@ -68,7 +60,9 @@ pnpm deploy
 - `src/`: 源代码目录
   - `components/`: React 组件
   - `chessboard/`: 棋盘识别和分析相关的模块
+  - `chessEngine/`: 象棋引擎调用类
 - `public/`: 静态资源目录
+- `assets/`: 图片资源目录
 - `vite.config.ts`: Vite 配置文件
 - `.github/workflows/`: GitHub Actions 工作流配置
 
