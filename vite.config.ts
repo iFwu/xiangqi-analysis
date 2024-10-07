@@ -24,7 +24,7 @@ export default defineConfig({
         name: '@techstark/opencv-js',
         setup() {
           return {
-            url: 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js',
+            url: 'https://cdn.jsdmirror.com/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js',
             injectTo: 'body',
             attrs: {
               async: true,
