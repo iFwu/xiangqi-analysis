@@ -23,6 +23,7 @@ export function useOpenCV() {
     }
   };
   useEffect(() => {
+    let intervalId: number;
     const initialize = async () => {
       if (typeof cv !== 'undefined') {
         await new Promise<void>((resolve) => {
@@ -31,6 +32,12 @@ export function useOpenCV() {
         await onOpenCVReady();
       } else {
         document.addEventListener('opencv-loaded', onOpenCVReady);
+        intervalId = setInterval(() => {
+          if (!isLoading && typeof cv !== 'undefined') {
+            clearInterval(intervalId);
+            onOpenCVReady();
+          }
+        }, 500);
       }
     }
 
@@ -38,6 +45,7 @@ export function useOpenCV() {
 
     return () => {
       document.removeEventListener('opencv-loaded', onOpenCVReady);
+      clearInterval(intervalId);
     };
   }, []);
 
