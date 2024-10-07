@@ -4,15 +4,8 @@ import { PieceType, PieceColor, PieceName } from './types';
 // 使用 import.meta.glob 预加载所有模板图片
 const templateImages = import.meta.glob('/assets/chess_templates/*.png', { eager: true });
 
-// 预处理模板图像
-function preprocessTemplateImage(templateImage: cv.Mat, cellSize: [number, number]): cv.Mat {
-  const resizedTemplate = new cv.Mat();
-  cv.resize(templateImage, resizedTemplate, new cv.Size(cellSize[0], cellSize[1]));
-  return resizedTemplate;
-}
-
 // 预处理所有模板
-export async function preprocessAllTemplates(cellSize: [number, number] = [60, 60]): Promise<Record<PieceName, cv.Mat>> {
+export async function preprocessAllTemplates(): Promise<Record<PieceName, cv.Mat>> {
   const templates: Partial<Record<PieceName, cv.Mat>> = {};
 
   for (const [path, module] of Object.entries(templateImages)) {
@@ -26,10 +19,8 @@ export async function preprocessAllTemplates(cellSize: [number, number] = [60, 6
       const src = cv.imread(img);
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-      const preprocessed = preprocessTemplateImage(gray, cellSize);
-      templates[pieceName] = preprocessed;
+      templates[pieceName] = gray;
       src.delete();
-      gray.delete();
     }
   }
 
@@ -45,7 +36,7 @@ export function templateMatchingForPiece(
   let maxMatchValue = -1;
   let matchedPiece: PieceType = 'none';
 
-  const cellSize = [ cellImage.cols, cellImage.rows ];
+  const cellSize = [cellImage.cols, cellImage.rows];
 
   const grayCellImage = new cv.Mat();
   if (cellImage.channels() === 4) {
@@ -56,20 +47,20 @@ export function templateMatchingForPiece(
     cellImage.copyTo(grayCellImage);
   }
 
-  const colorSpecificTemplates = Object.entries(templates).filter(([ pieceName, _ ]) => {
+  const colorSpecificTemplates = Object.entries(templates).filter(([pieceName, _]) => {
     if (pieceColor === 'red') return pieceName.startsWith('red_');
     if (pieceColor === 'black') return pieceName.startsWith('black_');
     return true;
   });
 
-  for (const [ pieceName, template ] of colorSpecificTemplates) {
+  for (const [pieceName, template] of colorSpecificTemplates) {
     const resizedTemplate = new cv.Mat();
-    cv.resize(template, resizedTemplate, new cv.Size(cellSize[ 0 ], cellSize[ 1 ]));
+    cv.resize(template, resizedTemplate, new cv.Size(cellSize[0], cellSize[1]));
 
     const result = new cv.Mat();
     cv.matchTemplate(grayCellImage, resizedTemplate, result, cv.TM_CCOEFF_NORMED);
 
-    // @ts-ignore
+    // @ts-ignore 保留这个注释
     const minMax = cv.minMaxLoc(result);
 
     if (minMax.maxVal > maxMatchValue) {
@@ -83,8 +74,8 @@ export function templateMatchingForPiece(
         'cannon': 'c',
         'pawn': 'p'
       };
-      const pieceTypeName = pieceName.split('_')[ 1 ];
-      matchedPiece = pieceTypeMap[ pieceTypeName ] || 'none';
+      const pieceTypeName = pieceName.split('_')[1];
+      matchedPiece = pieceTypeMap[pieceTypeName] || 'none';
     }
 
     resizedTemplate.delete();
