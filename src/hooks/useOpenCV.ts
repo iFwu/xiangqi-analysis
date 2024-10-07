@@ -5,6 +5,7 @@ import { preprocessAllTemplates } from '../chessboard/templateMatching';
 
 export function useOpenCV() {
   const [templates, setTemplates] = useState<Record<PieceName, cv.Mat> | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
 
   useEffect(() => {
     const initialize = async () => {
@@ -21,11 +22,13 @@ export function useOpenCV() {
         setTemplates(loadedTemplates);
       } catch (error) {
         console.error('Error loading templates:', error);
+      } finally {
+        setIsLoading(false); // Set isLoading to false after initialization
       }
     };
 
     initialize();
   }, []);
 
-  return { templates };
+  return { templates, isLoading }; // Return isLoading
 }

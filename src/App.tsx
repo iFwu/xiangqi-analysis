@@ -18,6 +18,7 @@ import { useChessEngine } from './hooks/useChessEngine';
 import { useDepth } from './hooks/useDepth';
 import { DepthControl } from './components/DepthControl';
 import { WelcomeModal } from './components/WelcomeModal';
+import { Spinner } from './components/Spinner';
 
 export function App() {
   const [overlayImageSrc, setOverlayImageSrc] = useState('');
@@ -35,7 +36,7 @@ export function App() {
     height: number;
   }>();
 
-  const { templates } = useOpenCV();
+  const { templates, isLoading: isOpenCVLoading } = useOpenCV();
   const { bestMove, loading, error, fetchBestMove, setBestMove } = useChessEngine();
   const { depth, setDepth } = useDepth();
 
@@ -144,6 +145,15 @@ export function App() {
     setBestMove('');
     processImage(img);
   };
+
+  if (isOpenCVLoading) {
+    return (
+      <div className="loading-overlay">
+        <Spinner />
+        <p>正在加载必要组件，请稍候...</p>
+      </div>
+    );
+  }
 
   return (
     <>
