@@ -47,7 +47,6 @@ export function App() {
     width: number;
     height: number;
   }>();
-  // 从 localStorage 加载初始深度值
   const initialDepth = Number(localStorage.getItem('depth')) || 14;
   const [depth, setDepth] = useState(initialDepth);
 
@@ -90,7 +89,7 @@ export function App() {
   //   img.onload = () => {
   //     processImage(img, templates);
   //   };
-  //   img.src = `${import.meta.env.BASE_URL}test.png`;
+  //   img.src = '/assets/test.png';
   // };
 
   const processImage = (
@@ -99,8 +98,6 @@ export function App() {
   ) => {
     setOriginalImageSize({ width: img.width, height: img.height });
     const { gridCells, chessboardRect } = detectAndExtractChessboard(img);
-    console.log('Original image size:', img.width, img.height);
-    console.log('Detected chessboard rect:', chessboardRect);
 
     const adjustedChessboardRect = {
       x: Math.max(0, chessboardRect.x),
@@ -109,7 +106,6 @@ export function App() {
       height: Math.min(chessboardRect.height, img.height - chessboardRect.y),
     };
 
-    console.log('Adjusted chessboard rect:', adjustedChessboardRect);
     setChessboardRect(adjustedChessboardRect);
 
     const detectedPieces: {
@@ -136,9 +132,6 @@ export function App() {
             color: pieceColor,
             type: pieceType,
           });
-          console.log(
-            `Detected piece at (${row}, ${col}): color=${pieceColor}, type=${pieceType}`
-          );
         }
       }
     }
@@ -163,7 +156,6 @@ export function App() {
     const initialFenCode = generateFenFromPieces(pieceLayout, 'red');
     setFenCode(initialFenCode);
     setFenHistory([initialFenCode]);
-    // We don't call fetchBestMove here; the next useEffect will handle it
   };
 
   // Fetch best move whenever fenCode or depth changes and engine is ready
@@ -171,7 +163,7 @@ export function App() {
     if (fenCode && engine) {
       fetchBestMove(fenCode);
     }
-  }, [fenCode, engine, depth]); // 将深度作为依赖
+  }, [fenCode, engine, depth]);
 
   const handleCopyFEN = () => {
     navigator.clipboard.writeText(fenCode);
@@ -188,7 +180,7 @@ export function App() {
       setLoading(true);
       setError(null);
       try {
-        const move = await engine.getBestMove(fen, depth); // 传递度值
+        const move = await engine.getBestMove(fen, depth);
         setBestMove(move);
         if (move === 'red_wins' || move === 'black_wins') {
           setLoading(false);
@@ -201,41 +193,35 @@ export function App() {
       }
     },
     [engine, depth]
-  ); // 将深度作为依赖
+  );
 
   const handleNextMove = async () => {
     if (!bestMove || bestMove === 'red_wins' || bestMove === 'black_wins') {
       setError('No valid move available');
       return;
     }
-    // Apply the best move to the current FEN
     const newFen = updateFEN(fenCode, bestMove);
     setFenCode(newFen);
     setFenHistory((prev) => [...prev, newFen]);
     setMoveHistory((prev) => [...prev, bestMove]);
-    setBestMove(''); // Reset bestMove
-    // The useEffect will fetch the next best move automatically
+    setBestMove('');
   };
 
   const handlePreviousMove = () => {
     if (fenHistory.length > 1) {
-      // Remove the last FEN and move from their respective histories
       const newFenHistory = fenHistory.slice(0, -1);
       const newMoveHistory = moveHistory.slice(0, -1);
-
-      // Set the current FEN to the previous one
       const previousFen = newFenHistory[newFenHistory.length - 1];
 
       setFenHistory(newFenHistory);
       setMoveHistory(newMoveHistory);
       setFenCode(previousFen);
-      setBestMove(''); // Reset bestMove to trigger a new calculation
+      setBestMove('');
     }
   };
 
   const handleImageUpload = (img: HTMLImageElement) => {
     if (templates) {
-      // Clear previous history and state
       setFenHistory([]);
       setMoveHistory([]);
       setBestMove('');

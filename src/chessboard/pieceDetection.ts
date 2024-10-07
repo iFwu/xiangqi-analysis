@@ -10,7 +10,6 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
   const stddev = new cv.Mat();
   cv.meanStdDev(grayCell, mean, stddev);
   const contrast = stddev.doubleAt(0, 0);
-  // 清理内存
   mat.delete(); grayCell.delete(); mean.delete(); stddev.delete();
   return contrast > contrastThreshold;
 }
@@ -28,7 +27,6 @@ export function detectPieceColor(cellImage: ImageData): PieceColor {
   const redRatio = redPixels / totalPixels;
   const blackRatio = blackPixels / totalPixels;
 
-  // 清理内存
   hsvImage.delete();
   redMask.delete();
   blackMask.delete();
@@ -54,7 +52,6 @@ export function processPiece(cellImage: ImageData, pieceColor: PieceColor): Imag
 
   const processedMat = extractLargestContourRegion(mask);
 
-  // 确保处理后的图像是 4 通道的
   let processedMatRGBA = new cv.Mat();
   if (processedMat.channels() === 1) {
     cv.cvtColor(processedMat, processedMatRGBA, cv.COLOR_GRAY2RGBA);
@@ -64,14 +61,12 @@ export function processPiece(cellImage: ImageData, pieceColor: PieceColor): Imag
     processedMatRGBA = processedMat.clone();
   }
 
-  // 将处理后的 Mat 转换为 ImageData
   const processedImageData = new ImageData(
     new Uint8ClampedArray(processedMatRGBA.data),
     processedMatRGBA.cols,
     processedMatRGBA.rows
   );
 
-  // 清理内存
   mask.delete();
   processedMat.delete();
   processedMatRGBA.delete();
@@ -90,35 +85,100 @@ function extractRedPieceMask(cellImage: ImageData): cv.Mat {
 // 提取黑色棋子的掩码
 function extractBlackPieceMask(cellImage: ImageData): cv.Mat {
   const hsvImage = convertToHSV(cellImage);
-  const maskBlack = createColorMask(hsvImage, [0, 0, 0], [180, 255, 100]);
+
+  const hsvChannels = new cv.MatVector();
+  cv.split(hsvImage, hsvChannels);
+  const vChannel = hsvChannels.get(2);
+  cv.equalizeHist(vChannel, vChannel);
+  hsvChannels.set(2, vChannel);
+  cv.merge(hsvChannels, hsvImage);
+
+  const edges = new cv.Mat();
+  cv.Canny(hsvImage, edges, 400, 600);
+
+  const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+  const morphedEdges = new cv.Mat();
+  cv.morphologyEx(edges, morphedEdges, cv.MORPH_CLOSE, kernel);
+
+  const contours = new cv.MatVector();
+  const hierarchy = new cv.Mat();
+  cv.findContours(morphedEdges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  let maskBlack: cv.Mat;
+  if (contours.size() === 0) {
+    maskBlack = cv.Mat.zeros(hsvImage.rows, hsvImage.cols, cv.CV_8UC1);
+  } else {
+    let maxArea = 0;
+    let maxContour = contours.get(0);
+    for (let i = 0; i < contours.size(); i++) {
+      const contour = contours.get(i);
+      const area = cv.contourArea(contour);
+      if (area > maxArea) {
+        maxArea = area;
+        maxContour = contour;
+      }
+    }
+
+    const moments = cv.moments(maxContour, false);
+    const centerX = moments.m10 / moments.m00;
+    const centerY = moments.m01 / moments.m00;
+    const center = new cv.Point(centerX, centerY);
+    const scaleFactor = 0.98;
+
+    const scaledContour = new cv.Mat(maxContour.rows, 1, cv.CV_32SC2);
+    for (let i = 0; i < maxContour.rows; i++) {
+      const pointX = maxContour.data32S[i * 2];
+      const pointY = maxContour.data32S[i * 2 + 1];
+      const newX = center.x + (pointX - center.x) * scaleFactor;
+      const newY = center.y + (pointY - center.y) * scaleFactor;
+      scaledContour.intPtr(i, 0)[0] = newX;
+      scaledContour.intPtr(i, 0)[1] = newY;
+    }
+
+    maskBlack = createColorMask(hsvImage, [0, 0, 0], [180, 255, 80]);
+    
+    const largestContourMask = cv.Mat.zeros(maskBlack.rows, maskBlack.cols, cv.CV_8UC1);
+    const contourVector = new cv.MatVector();
+    contourVector.push_back(scaledContour);
+    
+    cv.drawContours(largestContourMask, contourVector, 0, new cv.Scalar(255), cv.FILLED);
+    
+    cv.bitwise_and(maskBlack, largestContourMask, maskBlack);
+
+    scaledContour.delete();
+    contourVector.delete();
+  }
+
   hsvImage.delete();
+  hsvChannels.delete();
+  vChannel.delete();
+  edges.delete();
+  morphedEdges.delete();
+  contours.delete();
+  hierarchy.delete();
+  kernel.delete();
+
   return maskBlack;
 }
 
 // 提取最大轮廓区域
 function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
-  // 保留原始掩码图像
   const originalMask = maskImage.clone();
 
-  // 形态学闭操作
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-  cv.morphologyEx(maskImage, maskImage, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 2);
+  cv.morphologyEx(maskImage, maskImage, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 3);
 
-  // 查找轮廓
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
   cv.findContours(maskImage, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
   if (contours.size() === 0) {
-    // 清理内存
     kernel.delete(); contours.delete(); hierarchy.delete();
     return originalMask;
   }
 
-  // 获取图像面积
   const imgArea = maskImage.cols * maskImage.rows;
 
-  // 筛选符合条件的轮廓
   const validContours: { contour: cv.Mat, contourArea: number, rect: cv.Rect }[] = [];
   for (let i = 0; i < contours.size(); i++) {
     const contour = contours.get(i);
@@ -131,24 +191,20 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
         validContours.push({ contour, contourArea, rect });
       }
     }
-    contour.delete(); // 释放当前轮廓的内存
+    contour.delete();
   }
 
   if (validContours.length === 0) {
-    // 清理内存
     kernel.delete(); contours.delete(); hierarchy.delete();
     return originalMask;
   }
 
-  // 按面积排序，选择最大面积的轮廓
   validContours.sort((a, b) => b.contourArea - a.contourArea);
   const bestContour = validContours[0];
   const { x, y, width, height } = bestContour.rect;
 
-  // 使用原始掩码图像进行裁剪，返回结果
   const croppedImage = originalMask.roi(new cv.Rect(x, y, width, height));
 
-  // 清理内存
   kernel.delete(); contours.delete(); hierarchy.delete();
   originalMask.delete();
 

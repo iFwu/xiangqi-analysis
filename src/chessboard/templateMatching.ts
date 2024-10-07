@@ -47,7 +47,6 @@ export function templateMatchingForPiece(
 
   const cellSize = [ cellImage.cols, cellImage.rows ];
 
-  // 将 cellImage 转换为灰度图（如果还不是的话）
   const grayCellImage = new cv.Mat();
   if (cellImage.channels() === 4) {
     cv.cvtColor(cellImage, grayCellImage, cv.COLOR_RGBA2GRAY);
@@ -57,14 +56,12 @@ export function templateMatchingForPiece(
     cellImage.copyTo(grayCellImage);
   }
 
-  // 根据颜色过滤模板
   const colorSpecificTemplates = Object.entries(templates).filter(([ pieceName, _ ]) => {
     if (pieceColor === 'red') return pieceName.startsWith('red_');
     if (pieceColor === 'black') return pieceName.startsWith('black_');
-    return true; // 如果颜色未知，使用所有模板
+    return true;
   });
 
-  // 遍历所有过滤后的模板进行匹配
   for (const [ pieceName, template ] of colorSpecificTemplates) {
     const resizedTemplate = new cv.Mat();
     cv.resize(template, resizedTemplate, new cv.Size(cellSize[ 0 ], cellSize[ 1 ]));
@@ -77,7 +74,6 @@ export function templateMatchingForPiece(
 
     if (minMax.maxVal > maxMatchValue) {
       maxMatchValue = minMax.maxVal;
-      // 修改这里以返回正确的 PieceType
       const pieceTypeMap: Record<string, PieceType> = {
         'king': 'k',
         'guard': 'a',
@@ -97,7 +93,6 @@ export function templateMatchingForPiece(
 
   grayCellImage.delete();
 
-  // 设置阈值，只有超过某个匹配度的结果才认为匹配成功
   const matchingThreshold = 0.3;
   if (maxMatchValue > matchingThreshold) {
     return matchedPiece;
