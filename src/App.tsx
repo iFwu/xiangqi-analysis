@@ -151,6 +151,7 @@ export function App() {
       <div className="loading-overlay">
         <Spinner />
         <p>正在加载必要组件，请稍候...</p>
+        <p>如果加载时间过长，请刷新页面重试。</p>
       </div>
     );
   }
