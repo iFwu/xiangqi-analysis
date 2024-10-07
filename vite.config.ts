@@ -5,6 +5,7 @@ import cdn from 'vite-plugin-cdn-import';
 declare const process: {
   env: {
     GITHUB_PAGES?: string;
+    VITE_GIT_COMMIT_HASH?: string;
   };
 };
 
@@ -22,7 +23,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    hmr: false,
+    // hmr: false,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -43,4 +44,7 @@ export default defineConfig({
   },
   // 根据环境动态设置 base
   base: process.env.GITHUB_PAGES === 'true' ? '/xiangqi-analysis/' : '/',
+  define: {
+    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(process.env.VITE_GIT_COMMIT_HASH),
+  },
 });

@@ -10,10 +10,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          version: 9.12.0  # Updated to match the version in package.json
+          version: 9.12.0
           run_install: false
 
       - name: Install Node.js
@@ -23,14 +24,19 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install  # 使用pnpm进行依赖安装
+        run: pnpm install
+
+      - name: Get short SHA
+        id: slug
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
 
       - name: Build
-        run: pnpm build  # 使用pnpm进行构建
+        run: pnpm build
         env:
           GITHUB_PAGES: 'true'
+          VITE_GIT_COMMIT_HASH: ${{ steps.slug.outputs.sha8 }}
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist  # 要部署的文件夹，通常是构建输出目录
+          folder: dist

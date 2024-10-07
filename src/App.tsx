@@ -17,6 +17,7 @@ import { useOpenCV } from './hooks/useOpenCV';
 import { useChessEngine } from './hooks/useChessEngine';
 import { useDepth } from './hooks/useDepth';
 import { DepthControl } from './components/DepthControl';
+import { WelcomeModal } from './components/WelcomeModal';
 
 export function App() {
   const [overlayImageSrc, setOverlayImageSrc] = useState('');
@@ -150,6 +151,7 @@ export function App() {
         <h1>象棋棋盘识别与分析</h1>
       </header>
       <main className="app-container">
+        <WelcomeModal />
         <div className="content-wrapper">
           <div className="left-column">
             <SolutionDisplay
