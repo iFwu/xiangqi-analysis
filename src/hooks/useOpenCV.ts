@@ -24,7 +24,7 @@ export function useOpenCV() {
   };
   useEffect(() => {
     const initialize = async () => {
-      if (cv) {
+      if (typeof cv !== 'undefined') {
         await new Promise<void>((resolve) => {
           cv.onRuntimeInitialized = resolve;
         });
