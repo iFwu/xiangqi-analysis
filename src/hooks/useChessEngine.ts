@@ -4,14 +4,16 @@ import { ChessEngine } from '../chessEngine';
 export function useChessEngine() {
   const [engine, setEngine] = useState<ChessEngine | null>(null);
   const [bestMove, setBestMove] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEngineReady, setIsEngineReady] = useState(false);
 
   useEffect(() => {
     const initializeEngine = async () => {
       const newEngine = new ChessEngine();
       await newEngine.initEngine();
       setEngine(newEngine);
+      setIsEngineReady(true);
     };
 
     initializeEngine();
@@ -20,23 +22,23 @@ export function useChessEngine() {
   const fetchBestMove = useCallback(
     async (fen: string, depth: number) => {
       if (!engine) return;
-      setLoading(true);
+      setIsCalculating(true);
       setError(null);
       try {
         const move = await engine.getBestMove(fen, depth);
         setBestMove(move);
         if (move === 'red_wins' || move === 'black_wins') {
-          setLoading(false);
+          setIsCalculating(false);
           return;
         }
       } catch (err: any) {
         setError(`Error: ${err.message}`);
       } finally {
-        setLoading(false);
+        setIsCalculating(false);
       }
     },
     [engine]
   );
 
-  return { engine, bestMove, loading, error, fetchBestMove, setBestMove };
+  return { engine, bestMove, isCalculating, error, fetchBestMove, setBestMove, isEngineReady };
 }

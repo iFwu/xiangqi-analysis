@@ -38,8 +38,9 @@ export function App() {
   }>();
 
   const { templates, isLoading: isOpenCVLoading } = useOpenCV();
-  const { bestMove, loading, error, fetchBestMove, setBestMove } = useChessEngine();
+  const { bestMove, isCalculating, error, fetchBestMove, setBestMove, isEngineReady } = useChessEngine();
   const { depth, setDepth } = useDepth();
+  const isLoading = isOpenCVLoading || !isEngineReady;
 
   useEffect(() => {
     if (fenCode) {
@@ -149,7 +150,7 @@ export function App() {
     processImage(img);
   };
 
-  if (isOpenCVLoading) {
+  if (isLoading) {
     return (
       <div className="loading-overlay">
         <Spinner />
@@ -170,7 +171,7 @@ export function App() {
           <div className="left-column">
             <SolutionDisplay
               bestMove={bestMove}
-              loading={loading}
+              isCalculating={isCalculating}
               error={error}
               onNextMove={handleNextMove}
               onPreviousMove={handlePreviousMove}

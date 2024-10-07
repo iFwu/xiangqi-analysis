@@ -3,7 +3,7 @@ import { moveToChineseNotation } from '../chessboard/moveHelper';
 
 interface SolutionDisplayProps {
   bestMove: string;
-  loading: boolean;
+  isCalculating: boolean;
   error: string | null;
   onNextMove: () => void;
   onPreviousMove: () => void;
@@ -14,7 +14,7 @@ interface SolutionDisplayProps {
 
 export function SolutionDisplay({
   bestMove,
-  loading,
+  isCalculating,
   error,
   onNextMove,
   onPreviousMove,
@@ -59,13 +59,13 @@ export function SolutionDisplay({
         </button>
         <button
           onClick={onNextMove}
-          disabled={loading || !bestMove || isGameOver}
+          disabled={isCalculating || !bestMove || isGameOver}
         >
           下一步
         </button>
       </div>
       <div className="solution-debug">
-        {loading && <p>正在计算最佳走法...</p>}
+        {isCalculating && <p>正在计算最佳走法...</p>}
         {error && <p style={{ color: 'red' }}>{error}</p>}
         {!isGameOver && bestMove && (
           <p>
