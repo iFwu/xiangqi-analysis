@@ -1,5 +1,6 @@
 // App.tsx
 import { useState, useEffect } from 'preact/hooks';
+import cv from '@techstark/opencv-js';
 import './app.css';
 
 import { PieceColor, PieceType } from './chessboard/types';
@@ -75,7 +76,9 @@ export function App() {
   };
 
   const processImage = (img: HTMLImageElement) => {
-    if (!templates) return;
+    if (isOpenCVLoading || !templates) {
+      return;
+    }
 
     setOriginalImageSize({ width: img.width, height: img.height });
     const { gridCells, chessboardRect } = detectAndExtractChessboard(img);

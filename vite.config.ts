@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
-import cdn from 'vite-plugin-cdn-import';
+import cdn from 'vite-plugin-cdn2';
 
 declare const process: {
   env: {
@@ -16,10 +16,23 @@ export default defineConfig({
       modules: [
         {
           name: '@techstark/opencv-js',
-          var: 'cv',
-          path: 'dist/opencv.js',
+          relativeModule: 'dist/opencv.js',
+          global: 'cv',
         },
       ],
+      resolve: {
+        name: '@techstark/opencv-js',
+        setup() {
+          return {
+            url: 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js',
+            injectTo: 'body',
+            attrs: {
+              async: true,
+              onload: 'cv.onRuntimeInitialized = () => { document.dispatchEvent(new Event(\'opencv-loaded\')); }',
+            },
+          };
+        },
+      },
     }),
   ],
   server: {
@@ -40,7 +53,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['pikafish'],
+    include: [ 'pikafish' ],
   },
   // 根据环境动态设置 base
   base: process.env.GITHUB_PAGES === 'true' ? '/xiangqi-analysis/' : '/',

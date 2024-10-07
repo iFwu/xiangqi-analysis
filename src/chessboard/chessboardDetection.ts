@@ -1,8 +1,6 @@
 import cv from "@techstark/opencv-js";
 import { kmeans } from 'ml-kmeans';
 
-// @ts-ignore
-window.cv = cv;
 export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandRatioW: number = 0.055, expandRatioH: number = 0.055): { gridCells: ImageData[], chessboardRect: { x: number, y: number, width: number, height: number } } {
   const img = cv.imread(imgElement);
   const gray = new cv.Mat();
