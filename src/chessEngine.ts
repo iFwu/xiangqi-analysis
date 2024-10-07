@@ -12,8 +12,13 @@ export class ChessEngine {
         (window as any).Pikafish = Pikafish;
         this.engineInstance = await Pikafish({
           locateFile: (file: string) => {
+            if (import.meta.env.DEV) {
+              return file === 'pikafish.data'
+                ? `${import.meta.env.BASE_URL}wasm/data/${file}`
+                : `${import.meta.env.BASE_URL}wasm/${file}`;
+            }
             return file === 'pikafish.data'
-              ? 'https://xiangqiai.com/wasm/data/pikafish.data'
+              ? `https://xiangqiai.com/wasm/data/${file}`
               : `https://xiangqiai.com/wasm/single/${file}`;
           },
         });
