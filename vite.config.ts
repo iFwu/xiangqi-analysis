@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import cdn from 'vite-plugin-cdn2';
+import { Mode, plugin as markdown } from 'vite-plugin-markdown';
 
 declare const process: {
   env: {
@@ -34,6 +35,7 @@ export default defineConfig({
         },
       },
     }),
+    markdown({ mode: [ Mode.HTML ] }),
   ],
   server: {
     // hmr: false,
