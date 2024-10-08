@@ -377,7 +377,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     // 绘制文字，注意坐标现在是相对于变换后的原点
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(pieceSymbol, radius * 0.05, radius * 0.2);
+    ctx.fillText(pieceSymbol, radius * 0.05, radius * 0.23);
 
     // 恢复原始绘图状态
     ctx.restore();
