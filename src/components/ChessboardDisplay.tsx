@@ -282,7 +282,7 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
 
           // 绘制棋子文字
           ctx.fillStyle = piece.color === 'red' ? '#c00000' : '#000000';
-          ctx.font = 'bold 22px "LiSu", sans-serif';
+          ctx.font = '22px "LiSu", sans-serif';
           const pieceChar = piece.type.toUpperCase();
           const pieceSymbol =
             piece.color === 'red'
