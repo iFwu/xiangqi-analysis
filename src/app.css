@@ -617,3 +617,10 @@ dialog button:hover {
 .changelog-content h4,
 .changelog-content h5,
 .changelog-content h6 { font-size: 0.9rem; }
+
+@font-face {
+  font-family: 'LiSu';
+  src: url('/assets/LiSu.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+}

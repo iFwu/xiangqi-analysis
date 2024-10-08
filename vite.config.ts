@@ -62,4 +62,5 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(process.env.VITE_GIT_COMMIT_HASH),
   },
+  assetsInclude: ['**/*.woff2'],
 });

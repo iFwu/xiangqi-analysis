@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { PieceType, PieceColor } from '../chessboard/types';
+import LiSuFontUrl from '/assets/LiSu.woff2?url';
 
 const pieceMap: { [key: string]: string } = {
   k: '将',
@@ -31,6 +32,17 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
   const [board, setBoard] = useState<(Piece | null)[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scale, setScale] = useState(1);
+  const [fontLoaded, setFontLoaded] = useState(false);
+
+  useEffect(() => {
+    const font = new FontFace('LiSu', `url(${LiSuFontUrl})`);
+    font.load().then(() => {
+      document.fonts.add(font);
+      return document.fonts.ready;
+    }).then(() => {
+      setFontLoaded(true);
+    }).catch(error => console.error('Failed to load font:', error));
+  }, []);
 
   useEffect(() => {
     const newBoard = parseFEN(fen);
@@ -38,13 +50,13 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
   }, [fen]);
 
   useEffect(() => {
-    if (canvasRef.current) {
+    if (canvasRef.current && fontLoaded) {
       drawChessboard();
       if (bestMove) {
         drawArrow(bestMove);
       }
     }
-  }, [board, bestMove]);
+  }, [board, bestMove, fontLoaded]);
 
   useEffect(() => {
     function handleResize() {
@@ -98,12 +110,17 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     const boardWidth = 8 * cellSize + 2 * margin;
     const boardHeight = 9 * cellSize + 2 * margin;
     
-    // Set canvas size based on scale
-    canvas.width = boardWidth * scale;
-    canvas.height = boardHeight * scale;
+    const dpr = window.devicePixelRatio;
+    // 设置 Canvas 大小，考虑设备像素比
+    canvas.width = boardWidth * scale * dpr;
+    canvas.height = boardHeight * scale * dpr;
     
-    // Scale the context
-    ctx.scale(scale, scale);
+    // 设置 Canvas 的 CSS 大小
+    canvas.style.width = `${boardWidth * scale}px`;
+    canvas.style.height = `${boardHeight * scale}px`;
+    
+    // 缩放绘图上下文以匹配设备像素比
+    ctx.scale(dpr * scale, dpr * scale);
 
     // 绘制棋盘背景
     ctx.fillStyle = '#f0d9b5';
@@ -146,12 +163,12 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     ctx.stroke();
 
     // 绘制楚河汉界
-    ctx.font = '18px "KaiTi", "楷体", sans-serif';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.font = '20px "LiSu", sans-serif';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('楚 河', 2 * cellSize + margin, 4.5 * cellSize + margin);
-    ctx.fillText('漢 界', 6 * cellSize + margin, 4.5 * cellSize + margin);
+    ctx.fillText('楚  河', 2 * cellSize + margin, 4.6 * cellSize + margin);
+    ctx.fillText('汉  界', 6 * cellSize + margin, 4.6 * cellSize + margin);
 
     // 绘制九宫格斜线
     ctx.beginPath();
@@ -171,7 +188,7 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     function drawCrosshair(x: number, y: number, isEdge: boolean = false) {
       if (!ctx) return;
       const size = cellSize * 0.15;
-      const offset = -cellSize * 0.25; // 移动距离
+      const offset = -cellSize * 0.23; // 移动距离
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.lineWidth = 1;
 
@@ -222,7 +239,7 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
     }
 
     // 绘制坐标标记
-    ctx.font = '14px Arial';
+    ctx.font = '11px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -265,16 +282,26 @@ export function ChessboardDisplay({ fen, bestMove }: ChessboardDisplayProps) {
 
           // 绘制棋子文字
           ctx.fillStyle = piece.color === 'red' ? '#c00000' : '#000000';
-          ctx.font =
-            'bold 25px "LiSu", "隶书", "STKaiti", "楷体", "KaiTi", "SimKai", sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          ctx.font = 'bold 22px "LiSu", sans-serif';
           const pieceChar = piece.type.toUpperCase();
           const pieceSymbol =
             piece.color === 'red'
               ? pieceMap[pieceChar]
               : pieceMap[pieceChar.toLowerCase()];
-          ctx.fillText(pieceSymbol, centerX, centerY - radius * 0.12);
+
+          // 保存当前的绘图状态
+          ctx.save();
+
+          // 应用变换：水平拉伸 1.2 倍，垂直不变
+          ctx.setTransform(1 * dpr * scale, 0, 0, 1.25 * dpr * scale, centerX * dpr * scale, centerY * dpr * scale);
+
+          // 绘制文字，注意坐标现在是相对于变换后的原点
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pieceSymbol, radius * 0.05, radius * 0.2);
+
+          // 恢复原始绘图状态
+          ctx.restore();
         }
       });
     });
