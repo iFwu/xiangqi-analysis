@@ -6,9 +6,18 @@ export class ChessEngine {
   async initEngine() {
     if (!this.engineReady) {
       try {
-        // @ts-ignore
-        const PikafishModule = await import('pikafish');
-        const Pikafish = PikafishModule.default || PikafishModule;
+        let Pikafish;
+        if (import.meta.env.DEV) {
+          // Load local Pikafish in development
+          // @ts-ignore
+          const PikafishModule = await import('pikafish');
+          Pikafish = PikafishModule.default || PikafishModule;
+        } else {
+          // Load Pikafish from CDN in production
+          // @ts-ignore
+          const PikafishModule = await import('https://xiangqiai.com/wasm/single/pikafish.js');
+          Pikafish = PikafishModule.default || PikafishModule;
+        }
         (window as any).Pikafish = Pikafish;
         this.engineInstance = await Pikafish({
           locateFile: (file: string) => {
@@ -28,7 +37,7 @@ export class ChessEngine {
           console.log('> ', output);
           const bestMoveMatch = output.match(/bestmove\s(\S+)/);
           if (bestMoveMatch && this.currentResolve) {
-            this.currentResolve(bestMoveMatch[1]);
+            this.currentResolve(bestMoveMatch[ 1 ]);
             this.currentResolve = null;
           }
         };
@@ -51,7 +60,7 @@ export class ChessEngine {
         this.currentResolve = (value: string) => {
           if (value === '(none)') {
             const fenParts = fen.split(' ');
-            const sideToMove = fenParts[1];
+            const sideToMove = fenParts[ 1 ];
             resolve(sideToMove === 'b' ? 'red_wins' : 'black_wins');
           } else {
             resolve(value);
