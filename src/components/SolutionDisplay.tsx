@@ -10,6 +10,7 @@ interface SolutionDisplayProps {
   moveHistory: string[];
   fenCode: string;
   fenHistory: string[];
+  onFenUpdate: (newFen: string) => void;
 }
 
 export function SolutionDisplay({
@@ -21,6 +22,7 @@ export function SolutionDisplay({
   moveHistory,
   fenCode,
   fenHistory,
+  onFenUpdate,
 }: SolutionDisplayProps) {
   const currentMoveColor = moveHistory.length % 2 === 0 ? '红方' : '黑方';
   const currentMoveNumber = moveHistory.length + 1;
@@ -51,6 +53,7 @@ export function SolutionDisplay({
         <ChessboardDisplay
           fen={fenCode}
           bestMove={isGameOver ? '' : bestMove}
+          onFenUpdate={onFenUpdate}
         />
       </div>
       <div className="solution-controls">

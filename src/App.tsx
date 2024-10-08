@@ -150,6 +150,12 @@ export function App() {
     processImage(img);
   };
 
+  const handleFenUpdate = (newFen: string) => {
+    setFenCode(newFen);
+    setFenHistory((prev) => [...prev, newFen]);
+    setBestMove('');
+  };
+
   if (isLoading) {
     return (
       <div className="loading-overlay">
@@ -178,6 +184,7 @@ export function App() {
               moveHistory={moveHistory}
               fenCode={fenCode}
               fenHistory={fenHistory}
+              onFenUpdate={handleFenUpdate}
             />
           </div>
           <div className="right-column">
