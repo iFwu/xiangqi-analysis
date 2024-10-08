@@ -397,9 +397,6 @@ dialog button:hover {
   max-width: 90%;
   width: 500px;
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   z-index: 1000;
   background-color: white;
 }
