@@ -10,6 +10,7 @@ interface SolutionDisplayProps {
   moveHistory: string[];
   fenCode: string;
   fenHistory: string[];
+  onCustomMove: () => void; // Add this new prop
 }
 
 export function SolutionDisplay({
@@ -21,6 +22,7 @@ export function SolutionDisplay({
   moveHistory,
   fenCode,
   fenHistory,
+  onCustomMove, // Add this new prop
 }: SolutionDisplayProps) {
   const currentMoveColor = moveHistory.length % 2 === 0 ? '红方' : '黑方';
   const currentMoveNumber = moveHistory.length + 1;
@@ -62,6 +64,13 @@ export function SolutionDisplay({
           disabled={isCalculating || !bestMove || isGameOver}
         >
           下一步
+        </button>
+        {/* Add this new button */}
+        <button
+          onClick={onCustomMove}
+          disabled={isCalculating || isGameOver || moveHistory.length % 2 === 0}
+        >
+          自定义黑方走法
         </button>
       </div>
       <div className="solution-debug">

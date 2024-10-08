@@ -20,6 +20,7 @@ import { useDepth } from './hooks/useDepth';
 import { DepthControl } from './components/DepthControl';
 import { WelcomeModal } from './components/WelcomeModal';
 import { Spinner } from './components/Spinner';
+import { CustomMoveModal } from './components/CustomMoveModal'; // You'll need to create this new component
 
 export function App() {
   const [overlayImageSrc, setOverlayImageSrc] = useState('');
@@ -36,6 +37,7 @@ export function App() {
     width: number;
     height: number;
   }>();
+  const [isCustomMoveModalOpen, setIsCustomMoveModalOpen] = useState(false);
 
   const { templates, isLoading: isOpenCVLoading } = useOpenCV();
   const { bestMove, isCalculating, error, fetchBestMove, setBestMove, isEngineReady } = useChessEngine();
@@ -150,6 +152,19 @@ export function App() {
     processImage(img);
   };
 
+  const handleCustomMove = () => {
+    setIsCustomMoveModalOpen(true);
+  };
+
+  const handleCustomMoveSubmit = (customMove: string) => {
+    setIsCustomMoveModalOpen(false);
+    const newFen = updateFEN(fenCode, customMove);
+    setFenCode(newFen);
+    setFenHistory((prev) => [...prev, newFen]);
+    setMoveHistory((prev) => [...prev, customMove]);
+    setBestMove('');
+  };
+
   if (isLoading) {
     return (
       <div className="loading-overlay">
@@ -178,6 +193,7 @@ export function App() {
               moveHistory={moveHistory}
               fenCode={fenCode}
               fenHistory={fenHistory}
+              onCustomMove={handleCustomMove}
             />
           </div>
           <div className="right-column">
@@ -192,6 +208,13 @@ export function App() {
           </div>
         </div>
       </main>
+      {isCustomMoveModalOpen && (
+        <CustomMoveModal
+          onClose={() => setIsCustomMoveModalOpen(false)}
+          onSubmit={handleCustomMoveSubmit}
+          currentFen={fenCode}
+        />
+      )}
       <footer>
         <p>
           © 2024 象棋棋盘识别与分析系统 | 
