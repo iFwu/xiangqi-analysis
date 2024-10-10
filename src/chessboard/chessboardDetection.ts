@@ -1,7 +1,14 @@
-import cv from "@techstark/opencv-js";
+import cv from '@techstark/opencv-js';
 import { kmeans } from 'ml-kmeans';
 
-export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandRatioW: number = 0.055, expandRatioH: number = 0.055): { gridCells: ImageData[], chessboardRect: { x: number, y: number, width: number, height: number } } {
+export function detectAndExtractChessboard(
+  imgElement: HTMLImageElement,
+  expandRatioW: number = 0.055,
+  expandRatioH: number = 0.055
+): {
+  gridCells: ImageData[];
+  chessboardRect: { x: number; y: number; width: number; height: number };
+} {
   const img = cv.imread(imgElement);
   const gray = new cv.Mat();
   cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
@@ -21,7 +28,7 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
   cv.findContours(finalEdges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
   if (contours.size() === 0) {
-    console.log("未检测到任何轮廓。");
+    console.log('未检测到任何轮廓。');
     return { gridCells: [], chessboardRect: { x: NaN, y: NaN, width: NaN, height: NaN } };
   }
 
@@ -41,9 +48,16 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
 
   const { gridCells, expandedRect } = segmentChessboard(croppedRegion, expandRatioW, expandRatioH);
 
-  img.delete(); gray.delete(); blurred.delete(); edges.delete();
-  kernel.delete(); dilatedEdges.delete(); finalEdges.delete();
-  contours.delete(); hierarchy.delete(); croppedRegion.delete();
+  img.delete();
+  gray.delete();
+  blurred.delete();
+  edges.delete();
+  kernel.delete();
+  dilatedEdges.delete();
+  finalEdges.delete();
+  contours.delete();
+  hierarchy.delete();
+  croppedRegion.delete();
 
   return {
     gridCells,
@@ -51,12 +65,19 @@ export function detectAndExtractChessboard(imgElement: HTMLImageElement, expandR
       x: rect.x + expandedRect.x,
       y: rect.y + expandedRect.y,
       width: expandedRect.width,
-      height: expandedRect.height
-    }
+      height: expandedRect.height,
+    },
   };
 }
 
-function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRatioH: number): { gridCells: ImageData[], expandedRect: { x: number, y: number, width: number, height: number } } {
+function segmentChessboard(
+  croppedRegion: cv.Mat,
+  expandRatioW: number,
+  expandRatioH: number
+): {
+  gridCells: ImageData[];
+  expandedRect: { x: number; y: number; width: number; height: number };
+} {
   const grayCropped = new cv.Mat();
   cv.cvtColor(croppedRegion, grayCropped, cv.COLOR_RGBA2GRAY);
   const blurCropped = new cv.Mat();
@@ -68,10 +89,10 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
   cv.HoughLinesP(edgesCropped, lines, 1, Math.PI / 180, 80, 100, 50);
 
   if (lines.rows === 0) {
-    console.log("无法检测到棋盘线条。");
+    console.log('无法检测到棋盘线条。');
     return {
       gridCells: [],
-      expandedRect: { x: 0, y: 0, width: 0, height: 0 }
+      expandedRect: { x: 0, y: 0, width: 0, height: 0 },
     };
   }
 
@@ -80,7 +101,7 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
 
   for (let i = 0; i < lines.rows; i++) {
     const [x1, y1, x2, y2] = lines.data32S.slice(i * 4, (i + 1) * 4);
-    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+    const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
     if (Math.abs(angle) < 10) {
       horizontalLines.push([x1, y1, x2, y2]);
     } else if (Math.abs(angle) > 80) {
@@ -89,21 +110,29 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
   }
 
   if (horizontalLines.length < 10 || verticalLines.length < 9) {
-    console.log("线条不足，无法进行 KMeans 聚类。");
+    console.log('线条不足，无法进行 KMeans 聚类。');
     return {
       gridCells: [],
-      expandedRect: { x: 0, y: 0, width: 0, height: 0 }
+      expandedRect: { x: 0, y: 0, width: 0, height: 0 },
     };
   }
 
-  const horizontalYPositions = horizontalLines.flatMap(line => [line[1], line[3]]);
-  const verticalXPositions = verticalLines.flatMap(line => [line[0], line[2]]);
+  const horizontalYPositions = horizontalLines.flatMap((line) => [line[1], line[3]]);
+  const verticalXPositions = verticalLines.flatMap((line) => [line[0], line[2]]);
 
-  const resultH = kmeans(horizontalYPositions.map(y => [y]), 10, { maxIterations: 100 });
-  const resultV = kmeans(verticalXPositions.map(x => [x]), 9, { maxIterations: 100 });
+  const resultH = kmeans(
+    horizontalYPositions.map((y) => [y]),
+    10,
+    { maxIterations: 100 }
+  );
+  const resultV = kmeans(
+    verticalXPositions.map((x) => [x]),
+    9,
+    { maxIterations: 100 }
+  );
 
-  const horizontalClusterCenters = resultH.centroids.map(c => c[0]).sort((a, b) => a - b);
-  const verticalClusterCenters = resultV.centroids.map(c => c[0]).sort((a, b) => a - b);
+  const horizontalClusterCenters = resultH.centroids.map((c) => c[0]).sort((a, b) => a - b);
+  const verticalClusterCenters = resultV.centroids.map((c) => c[0]).sort((a, b) => a - b);
 
   const minY = Math.floor(horizontalClusterCenters[0]);
   const maxY = Math.ceil(horizontalClusterCenters[horizontalClusterCenters.length - 1]);
@@ -138,7 +167,7 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
       const x1 = j * gridWidth;
       const x2 = (j + 1) * gridWidth;
       const gridCell = expandedChessboardRegion.roi(new cv.Rect(x1, y1, x2 - x1, y2 - y1));
-      
+
       const canvas = document.createElement('canvas');
       canvas.width = gridCell.cols;
       canvas.height = gridCell.rows;
@@ -147,16 +176,20 @@ function segmentChessboard(croppedRegion: cv.Mat, expandRatioW: number, expandRa
       if (ctx) {
         gridCells.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
       }
-      
+
       gridCell.delete();
     }
   }
 
-  grayCropped.delete(); blurCropped.delete(); edgesCropped.delete();
-  lines.delete(); chessboardRegion.delete(); expandedChessboardRegion.delete();
+  grayCropped.delete();
+  blurCropped.delete();
+  edgesCropped.delete();
+  lines.delete();
+  chessboardRegion.delete();
+  expandedChessboardRegion.delete();
 
   return {
     gridCells,
-    expandedRect: { x: newX, y: newY, width: newW, height: newH }
+    expandedRect: { x: newX, y: newY, width: newW, height: newH },
   };
 }

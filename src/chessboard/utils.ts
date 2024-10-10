@@ -1,4 +1,4 @@
-import cv from "@techstark/opencv-js";
+import cv from '@techstark/opencv-js';
 
 export function displayImage(title: string, image: cv.Mat | ImageData, index: number) {
   console.log(`%c${title} (格子 ${index}):`, 'color: blue; font-weight: bold;');
@@ -17,10 +17,13 @@ export function displayImage(title: string, image: cv.Mat | ImageData, index: nu
 
   const dataUrl = canvas.toDataURL();
 
-  console.log('%c ', `
+  console.log(
+    '%c ',
+    `
     font-size: 1px;
     padding: ${canvas.height / 2}px ${canvas.width / 2}px;
     background: url(${dataUrl}) no-repeat;
     background-size: ${canvas.width}px ${canvas.height}px;
-  `);
+  `
+  );
 }

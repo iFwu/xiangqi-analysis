@@ -1,14 +1,26 @@
 import { PieceColor, PieceName, PieceType } from './types';
 
 const pieceTypeToChineseChar: Record<PieceName, string> = {
-  'red_king': '帥', 'red_guard': '仕', 'red_bishop': '相', 'red_knight': '傌', 'red_rook': '俥', 'red_cannon': '炮', 'red_pawn': '兵',
-  'black_king': '将', 'black_guard': '士', 'black_bishop': '象', 'black_knight': '馬', 'black_rook': '車', 'black_cannon': '炮', 'black_pawn': '卒',
+  red_king: '帥',
+  red_guard: '仕',
+  red_bishop: '相',
+  red_knight: '傌',
+  red_rook: '俥',
+  red_cannon: '炮',
+  red_pawn: '兵',
+  black_king: '将',
+  black_guard: '士',
+  black_bishop: '象',
+  black_knight: '馬',
+  black_rook: '車',
+  black_cannon: '炮',
+  black_pawn: '卒',
 };
 
 export function createOverlayImage(
   originalImage: HTMLImageElement,
-  chessboardRect: { x: number, y: number, width: number, height: number },
-  detectedPieces: { position: [number, number], color: PieceColor, type: PieceType }[]
+  chessboardRect: { x: number; y: number; width: number; height: number },
+  detectedPieces: { position: [number, number]; color: PieceColor; type: PieceType }[]
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = originalImage.width;
@@ -49,14 +61,14 @@ export function createOverlayImage(
 
 function pieceTypeToFullName(type: PieceType): string {
   const typeMap: Record<PieceType, string> = {
-    'k': 'king',
-    'a': 'guard',
-    'b': 'bishop',
-    'n': 'knight',
-    'r': 'rook',
-    'c': 'cannon',
-    'p': 'pawn',
-    'none': 'none'
+    k: 'king',
+    a: 'guard',
+    b: 'bishop',
+    n: 'knight',
+    r: 'rook',
+    c: 'cannon',
+    p: 'pawn',
+    none: 'none',
   };
   return typeMap[type];
 }

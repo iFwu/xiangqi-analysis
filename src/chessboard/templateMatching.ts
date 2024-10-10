@@ -1,4 +1,4 @@
-import cv from "@techstark/opencv-js";
+import cv from '@techstark/opencv-js';
 import { PieceType, PieceColor, PieceName } from './types';
 
 // 使用 import.meta.glob 预加载所有模板图片
@@ -66,13 +66,13 @@ export function templateMatchingForPiece(
     if (minMax.maxVal > maxMatchValue) {
       maxMatchValue = minMax.maxVal;
       const pieceTypeMap: Record<string, PieceType> = {
-        'king': 'k',
-        'guard': 'a',
-        'bishop': 'b',
-        'knight': 'n',
-        'rook': 'r',
-        'cannon': 'c',
-        'pawn': 'p'
+        king: 'k',
+        guard: 'a',
+        bishop: 'b',
+        knight: 'n',
+        rook: 'r',
+        cannon: 'c',
+        pawn: 'p',
       };
       const pieceTypeName = pieceName.split('_')[1];
       matchedPiece = pieceTypeMap[pieceTypeName] || 'none';

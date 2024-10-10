@@ -64,7 +64,8 @@ h2 {
 }
 
 /* 头部和底部 */
-header, footer {
+header,
+footer {
   width: 100%;
   background-color: var(--header-footer-bg);
   color: var(--header-footer-color);
@@ -147,7 +148,9 @@ button {
   background-color: var(--primary-color);
   color: #fff;
   cursor: pointer;
-  transition: background-color 0.3s, opacity 0.3s;
+  transition:
+    background-color 0.3s,
+    opacity 0.3s;
   display: inline-block; /* 确保按钮可以被居中 */
 }
 
@@ -162,7 +165,7 @@ button:disabled {
 }
 
 /* 输入框样式 */
-input[type="file"],
+input[type='file'],
 .fen-container input {
   display: block;
   margin: 1rem 0;
@@ -298,11 +301,21 @@ input[type="file"],
     width: 100%;
   }
 
-  .solution-section { order: 1; }
-  .upload-section { order: 0; }
-  .board-result-section { order: 2; }
-  .fen-section { order: 3; }
-  .depth-control-section { order: 4; }
+  .solution-section {
+    order: 1;
+  }
+  .upload-section {
+    order: 0;
+  }
+  .board-result-section {
+    order: 2;
+  }
+  .fen-section {
+    order: 3;
+  }
+  .depth-control-section {
+    order: 4;
+  }
 }
 
 @media (min-width: 769px) {
@@ -444,7 +457,9 @@ dialog button:hover {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s;
+  transition:
+    background-color 0.3s,
+    transform 0.1s;
   flex: 1;
   min-width: 120px;
 }
@@ -608,12 +623,20 @@ dialog button:hover {
 }
 
 /* 可以根据需要调整不同级别标题的大小 */
-.changelog-content h1 { font-size: 1.2rem; }
-.changelog-content h2 { font-size: 1.1rem; }
-.changelog-content h3 { font-size: 1rem; }
+.changelog-content h1 {
+  font-size: 1.2rem;
+}
+.changelog-content h2 {
+  font-size: 1.1rem;
+}
+.changelog-content h3 {
+  font-size: 1rem;
+}
 .changelog-content h4,
 .changelog-content h5,
-.changelog-content h6 { font-size: 0.9rem; }
+.changelog-content h6 {
+  font-size: 0.9rem;
+}
 
 @font-face {
   font-family: 'LiSu';

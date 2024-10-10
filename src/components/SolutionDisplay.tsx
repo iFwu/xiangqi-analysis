@@ -40,11 +40,7 @@ export function SolutionDisplay({
 
   const isGameOver = bestMove === 'red_wins' || bestMove === 'black_wins';
   const gameOverMessage =
-    bestMove === 'red_wins'
-      ? '红方胜'
-      : bestMove === 'black_wins'
-      ? '黑方胜'
-      : '';
+    bestMove === 'red_wins' ? '红方胜' : bestMove === 'black_wins' ? '黑方胜' : '';
 
   return (
     <div className="solution-section">
@@ -60,10 +56,7 @@ export function SolutionDisplay({
         <button onClick={onPreviousMove} disabled={moveHistory.length === 0}>
           上一步
         </button>
-        <button
-          onClick={onNextMove}
-          disabled={isCalculating || !bestMove || isGameOver}
-        >
+        <button onClick={onNextMove} disabled={isCalculating || !bestMove || isGameOver}>
           下一步
         </button>
       </div>
@@ -73,15 +66,10 @@ export function SolutionDisplay({
         {!isGameOver && bestMove && (
           <p>
             {currentMoveColor}最佳走法：
-            {moveToChineseNotation(fenCode, bestMove)} （第 {currentMoveNumber}{' '}
-            步）
+            {moveToChineseNotation(fenCode, bestMove)} （第 {currentMoveNumber} 步）
           </p>
         )}
-        {isGameOver && (
-          <p style={{ fontWeight: 'bold', color: 'green' }}>
-            {gameOverMessage}
-          </p>
-        )}
+        {isGameOver && <p style={{ fontWeight: 'bold', color: 'green' }}>{gameOverMessage}</p>}
       </div>
       <div className="move-list">{moveItems}</div>
     </div>

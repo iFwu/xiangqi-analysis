@@ -1,10 +1,10 @@
 export function updateFEN(fen: string, move: string): string {
   // 解析 FEN 字符串
-  const [ board_fen, side_to_move ] = fen.trim().split(/\s+/);
+  const [board_fen, side_to_move] = fen.trim().split(/\s+/);
   const fen_ranks = board_fen.split('/');
 
   if (fen_ranks.length !== 10) {
-    throw new Error("无效的 FEN：行数不正确");
+    throw new Error('无效的 FEN：行数不正确');
   }
 
   // 构建棋盘数组
@@ -22,14 +22,14 @@ export function updateFEN(fen: string, move: string): string {
       }
     }
     if (row.length !== 9) {
-      throw new Error("无效的 FEN：某一行的列数不正确");
+      throw new Error('无效的 FEN：某一行的列数不正确');
     }
     board.push(row);
   }
 
   // 解析走棋
   if (move.length !== 4) {
-    throw new Error("无效的走棋格式");
+    throw new Error('无效的走棋格式');
   }
 
   const files = 'abcdefghi';
@@ -44,26 +44,26 @@ export function updateFEN(fen: string, move: string): string {
   const to_rank = 9 - parseInt(to_rank_char, 10);
 
   if (from_file === -1 || to_file === -1 || isNaN(from_rank) || isNaN(to_rank)) {
-    throw new Error("无效的走棋格式");
+    throw new Error('无效的走棋格式');
   }
 
   // 获取要移动的棋子
-  const piece = board[ from_rank ][ from_file ];
+  const piece = board[from_rank][from_file];
   if (!piece) {
     console.error('fen:', fen);
     console.error('move:', move);
-    throw new Error("起始位置没有棋子");
+    throw new Error('起始位置没有棋子');
   }
 
   // 执行移动
-  board[ to_rank ][ to_file ] = piece;
-  board[ from_rank ][ from_file ] = null;
+  board[to_rank][to_file] = piece;
+  board[from_rank][from_file] = null;
 
   // 切换行棋方
   const new_side_to_move = side_to_move === 'w' ? 'b' : 'w';
 
   // 生成新的 FEN 字符串
-  const fen_ranks_new = board.map(rank => {
+  const fen_ranks_new = board.map((rank) => {
     let rank_str = '';
     let empty_count = 0;
     for (const square of rank) {
@@ -91,8 +91,20 @@ export function updateFEN(fen: string, move: string): string {
 
 export function moveToChineseNotation(fen: string, move: string): string {
   const pieceSymbols: { [key: string]: string } = {
-    'K': '帅', 'A': '仕', 'B': '相', 'N': '马', 'R': '车', 'C': '炮', 'P': '兵',
-    'k': '将', 'a': '士', 'b': '象', 'n': '马', 'r': '车', 'c': '炮', 'p': '卒',
+    K: '帅',
+    A: '仕',
+    B: '相',
+    N: '马',
+    R: '车',
+    C: '炮',
+    P: '兵',
+    k: '将',
+    a: '士',
+    b: '象',
+    n: '马',
+    r: '车',
+    c: '炮',
+    p: '卒',
   };
 
   const files = 'abcdefghi';
@@ -127,7 +139,7 @@ export function moveToChineseNotation(fen: string, move: string): string {
   if (!piece) {
     console.error('fen:', fen);
     console.error('move:', move);
-    throw new Error("起始位置没有棋子");
+    throw new Error('起始位置没有棋子');
   }
 
   const isRed = piece >= 'A' && piece <= 'Z';
@@ -142,8 +154,10 @@ export function moveToChineseNotation(fen: string, move: string): string {
 
   if (from_file === to_file) {
     // 直走，进或退
-    action = isRed ? (from_rank > to_rank ? '进' : '退') : (from_rank < to_rank ? '进' : '退');
-    actionNumber = isRed ? chineseNumbers[Math.abs(from_rank - to_rank)] : ` ${Math.abs(from_rank - to_rank)} `;
+    action = isRed ? (from_rank > to_rank ? '进' : '退') : from_rank < to_rank ? '进' : '退';
+    actionNumber = isRed
+      ? chineseNumbers[Math.abs(from_rank - to_rank)]
+      : ` ${Math.abs(from_rank - to_rank)} `;
   } else {
     // 横走或斜走
     action = '平';
@@ -151,8 +165,14 @@ export function moveToChineseNotation(fen: string, move: string): string {
   }
 
   // 处理特殊情况：马、象、士的移动
-  if (pieceName === '马' || pieceName === '象' || pieceName === '相' || pieceName === '仕' || pieceName === '士') {
-    action = isRed ? (from_rank > to_rank ? '进' : '退') : (from_rank < to_rank ? '进' : '退');
+  if (
+    pieceName === '马' ||
+    pieceName === '象' ||
+    pieceName === '相' ||
+    pieceName === '仕' ||
+    pieceName === '士'
+  ) {
+    action = isRed ? (from_rank > to_rank ? '进' : '退') : from_rank < to_rank ? '进' : '退';
     actionNumber = isRed ? chineseNumbers[9 - to_file] : ` ${to_file + 1} `;
   }
 

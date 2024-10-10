@@ -4,8 +4,8 @@ import { PieceName } from '../chessboard/types';
 import { preprocessAllTemplates } from '../chessboard/templateMatching';
 
 export function useOpenCV() {
-  const [ templates, setTemplates ] = useState<Record<PieceName, any> | null>(null);
-  const [ isLoading, setIsLoading ] = useState(true);
+  const [templates, setTemplates] = useState<Record<PieceName, any> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const onOpenCVReady = async () => {
     console.log('OpenCV.js is ready');
@@ -39,7 +39,7 @@ export function useOpenCV() {
           }
         }, 500);
       }
-    }
+    };
 
     initialize();
 

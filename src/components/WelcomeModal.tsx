@@ -9,8 +9,7 @@ export function WelcomeModal() {
 
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem('lastSeenVersion');
-    const skipFutureModals =
-      localStorage.getItem('skipFutureModals') === 'true';
+    const skipFutureModals = localStorage.getItem('skipFutureModals') === 'true';
 
     if (!skipFutureModals || lastSeenVersion !== APP_VERSION) {
       setIsOpen(true);
@@ -39,16 +38,10 @@ export function WelcomeModal() {
           <p>请注意：需要在设置中关闭行棋提示</p>
           <Changelog />
           <div className="button-group">
-            <button
-              onClick={() => handleClose(false)}
-              className="primary-button"
-            >
+            <button onClick={() => handleClose(false)} className="primary-button">
               我知道了
             </button>
-            <button
-              onClick={() => handleClose(true)}
-              className="secondary-button"
-            >
+            <button onClick={() => handleClose(true)} className="secondary-button">
               不再提示
             </button>
           </div>

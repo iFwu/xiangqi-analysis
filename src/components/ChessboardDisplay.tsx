@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useLayoutEffect } from 'preact/hooks';
 import { PieceType, PieceColor } from '../chessboard/types';
 import { updateFEN } from '../chessboard/moveHelper';
 import LiSuFontUrl from '/assets/LiSu.woff2?url';
@@ -16,14 +16,19 @@ interface PieceData {
 
 const CELL_SIZE = 40;
 
+const getScale = () => {
+  const maxWidth = window.innerWidth * 0.8;
+  const originalWidth = 8 * CELL_SIZE + CELL_SIZE;
+  const dpr = window.devicePixelRatio;
+  return Math.min(1, maxWidth / originalWidth) * dpr;
+};
+
 export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisplayProps) {
   const [board, setBoard] = useState<(PieceData | null)[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(getScale());
   const [fontLoaded, setFontLoaded] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<
-    [number, number] | null
-  >(null);
+  const [selectedPosition, setSelectedPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     const font = new FontFace('LiSu', `url(${LiSuFontUrl})`);
@@ -44,19 +49,19 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     setBoard(newBoard);
   }, [fen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    let lastWidth = window.innerWidth;
     function handleResize() {
-      if (canvasRef.current) {
-        const screenWidth = window.innerWidth;
-        const maxWidth = screenWidth * 0.8;
-        const originalWidth = 8 * CELL_SIZE + CELL_SIZE; // 8 cells + 2 margins
-        const dpr = window.devicePixelRatio;
-        const newScale = Math.min(1, maxWidth / originalWidth) * dpr;
-        setScale(newScale);
+      const currentWidth = window.innerWidth;
+      if (currentWidth !== lastWidth || lastWidth === undefined) {
+        if (canvasRef.current) {
+          setScale(getScale());
+        }
+        lastWidth = currentWidth;
       }
     }
 
-    handleResize();
+    handleResize(); // Set scale on initial load
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -79,10 +84,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
       row.forEach((piece, j) => {
         if (piece) {
           const isSelected =
-            (selectedPosition &&
-              selectedPosition[0] === i &&
-              selectedPosition[1] === j) ??
-            false;
+            (selectedPosition && selectedPosition[0] === i && selectedPosition[1] === j) ?? false;
           drawPiece(ctx, piece, [i, j], scale, isSelected);
         }
       });
@@ -109,7 +111,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
       const x = (event.clientX - rect.left) * scaleX;
       const y = (event.clientY - rect.top) * scaleY;
 
-      const margin = CELL_SIZE / 2 * scale;
+      const margin = (CELL_SIZE / 2) * scale;
 
       // 计算最近的交叉点
       const col = Math.round((x - margin) / (CELL_SIZE * scale));
@@ -125,7 +127,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
           const fromSquare = `${String.fromCharCode(97 + fromCol)}${9 - fromRow}`;
           const toSquare = `${String.fromCharCode(97 + col)}${9 - row}`;
           const move = `${fromSquare}${toSquare}`;
-          
+
           const newFen = updateFEN(fen, move);
           onFenUpdate(newFen);
           setSelectedPosition(null);
@@ -151,8 +153,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
       const boardRow: (PieceData | null)[] = [];
       for (let char of row) {
         if (isNaN(parseInt(char))) {
-          const color: PieceColor =
-            char === char.toUpperCase() ? 'red' : 'black';
+          const color: PieceColor = char === char.toUpperCase() ? 'red' : 'black';
           const type: PieceType = char.toLowerCase() as PieceType;
           boardRow.push({ color, type });
         } else {
@@ -180,9 +181,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     canvas.height = boardHeight * scale;
 
     canvas.style.width = `${(boardWidth * scale) / window.devicePixelRatio}px`;
-    canvas.style.height = `${
-      (boardHeight * scale) / window.devicePixelRatio
-    }px`;
+    canvas.style.height = `${(boardHeight * scale) / window.devicePixelRatio}px`;
 
     ctx.scale(scale, scale);
 
@@ -311,11 +310,7 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     // 绘制红方（下方）列标记，从右左
     const redColumns = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
     for (let i = 0; i < 9; i++) {
-      ctx.fillText(
-        redColumns[i],
-        (8 - i) * CELL_SIZE + margin,
-        boardHeight - margin / 2
-      );
+      ctx.fillText(redColumns[i], (8 - i) * CELL_SIZE + margin, boardHeight - margin / 2);
     }
     for (let i = 0; i < 9; i++) {
       ctx.fillText((9 - i).toString(), (8 - i) * CELL_SIZE + margin, margin / 2);
@@ -357,27 +352,18 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     ctx.font = '22px "LiSu", sans-serif';
     const pieceChar = piece.type.toUpperCase();
     const pieceSymbol =
-      piece.color === 'red'
-        ? pieceMap[pieceChar]
-        : pieceMap[pieceChar.toLowerCase()];
+      piece.color === 'red' ? pieceMap[pieceChar] : pieceMap[pieceChar.toLowerCase()];
 
     // 保存当前绘图状态
     ctx.save();
 
     // 更新变换以使用新的缩放比例
-    ctx.setTransform(
-      scale,
-      0,
-      0,
-      1.25 * scale,
-      centerX * scale,
-      centerY * scale
-    );
+    ctx.setTransform(scale, 0, 0, 1.3 * scale, centerX * scale, centerY * scale);
 
     // 绘制文字，注意坐标现在是相对于变换后的原点
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(pieceSymbol, radius * 0.05, radius * 0.23);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(pieceSymbol, radius * 0.05, radius * 0.9);
 
     // 恢复原始绘图状态
     ctx.restore();

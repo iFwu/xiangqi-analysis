@@ -27,10 +27,10 @@ export function ImageUploader({ onImageUpload }: ImageUploaderProps) {
   return (
     <section className="upload-section">
       <h2>上传图片</h2>
-      <input 
+      <input
         ref={fileInputRef}
-        type="file" 
-        onChange={handleImageUpload} 
+        type="file"
+        onChange={handleImageUpload}
         accept="image/*"
         style={{ display: 'none' }}
       />

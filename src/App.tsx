@@ -38,7 +38,8 @@ export function App() {
   }>();
 
   const { templates, isLoading: isOpenCVLoading } = useOpenCV();
-  const { bestMove, isCalculating, error, fetchBestMove, setBestMove, isEngineReady } = useChessEngine();
+  const { bestMove, isCalculating, error, fetchBestMove, setBestMove, isEngineReady } =
+    useChessEngine();
   const { depth, setDepth } = useDepth();
   const isLoading = isOpenCVLoading || !isEngineReady;
 
@@ -121,11 +122,7 @@ export function App() {
       }
     }
 
-    const overlayCanvas = createOverlayImage(
-      img,
-      adjustedChessboardRect,
-      detectedPieces
-    );
+    const overlayCanvas = createOverlayImage(img, adjustedChessboardRect, detectedPieces);
     setOverlayImageSrc(overlayCanvas.toDataURL());
 
     const pieceLayout: string[][] = Array(10)
@@ -201,8 +198,8 @@ export function App() {
       </main>
       <footer>
         <p>
-          © 2024 象棋棋盘识别与分析系统 | 
-          Powered by <a href="https://github.com/official-pikafish/Pikafish">Pikafish</a>&nbsp;|&nbsp;
+          © 2024 象棋棋盘识别与分析系统 | Powered by{' '}
+          <a href="https://github.com/official-pikafish/Pikafish">Pikafish</a>&nbsp;|&nbsp;
           <a href="https://github.com/iFwu/xiangqi-analysis">GitHub 源码仓库</a>
         </p>
       </footer>

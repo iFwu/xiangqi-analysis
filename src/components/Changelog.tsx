@@ -16,7 +16,10 @@ export const Changelog: FunctionComponent = () => {
         更新日志
       </h3>
       {isExpanded && (
-        <div className="changelog-content markdown-content" dangerouslySetInnerHTML={{ __html: html }} />
+        <div
+          className="changelog-content markdown-content"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { PieceColor } from './types';
-import cv from "@techstark/opencv-js";
+import cv from '@techstark/opencv-js';
 
 // 检测格子中是否有棋子
 export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30): boolean {
@@ -10,7 +10,10 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
   const stddev = new cv.Mat();
   cv.meanStdDev(grayCell, mean, stddev);
   const contrast = stddev.doubleAt(0, 0);
-  mat.delete(); grayCell.delete(); mean.delete(); stddev.delete();
+  mat.delete();
+  grayCell.delete();
+  mean.delete();
+  stddev.delete();
   return contrast > contrastThreshold;
 }
 
@@ -18,7 +21,13 @@ export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30):
 export function detectPieceColor(cellImage: ImageData): PieceColor {
   const hsvImage = convertToHSV(cellImage);
 
-  const redMask = createColorMask(hsvImage, [0, 120, 120], [10, 255, 255], [160, 120, 120], [179, 255, 255]);
+  const redMask = createColorMask(
+    hsvImage,
+    [0, 120, 120],
+    [10, 255, 255],
+    [160, 120, 120],
+    [179, 255, 255]
+  );
   const blackMask = createColorMask(hsvImage, [0, 0, 0], [180, 255, 80]);
 
   const totalPixels = cellImage.width * cellImage.height;
@@ -77,7 +86,13 @@ export function processPiece(cellImage: ImageData, pieceColor: PieceColor): Imag
 // 提取红色棋子的掩码
 function extractRedPieceMask(cellImage: ImageData): cv.Mat {
   const hsvImage = convertToHSV(cellImage);
-  const maskRed = createColorMask(hsvImage, [0, 100, 100], [10, 255, 255], [160, 100, 100], [179, 255, 255]);
+  const maskRed = createColorMask(
+    hsvImage,
+    [0, 100, 100],
+    [10, 255, 255],
+    [160, 100, 100],
+    [179, 255, 255]
+  );
   hsvImage.delete();
   return maskRed;
 }
@@ -136,13 +151,13 @@ function extractBlackPieceMask(cellImage: ImageData): cv.Mat {
     }
 
     maskBlack = createColorMask(hsvImage, [0, 0, 0], [180, 255, 80]);
-    
+
     const largestContourMask = cv.Mat.zeros(maskBlack.rows, maskBlack.cols, cv.CV_8UC1);
     const contourVector = new cv.MatVector();
     contourVector.push_back(scaledContour);
-    
+
     cv.drawContours(largestContourMask, contourVector, 0, new cv.Scalar(255), cv.FILLED);
-    
+
     cv.bitwise_and(maskBlack, largestContourMask, maskBlack);
 
     scaledContour.delete();
@@ -173,13 +188,15 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   cv.findContours(maskImage, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
   if (contours.size() === 0) {
-    kernel.delete(); contours.delete(); hierarchy.delete();
+    kernel.delete();
+    contours.delete();
+    hierarchy.delete();
     return originalMask;
   }
 
   const imgArea = maskImage.cols * maskImage.rows;
 
-  const validContours: { contour: cv.Mat, contourArea: number, rect: cv.Rect }[] = [];
+  const validContours: { contour: cv.Mat; contourArea: number; rect: cv.Rect }[] = [];
   for (let i = 0; i < contours.size(); i++) {
     const contour = contours.get(i);
     const rect = cv.boundingRect(contour);
@@ -195,7 +212,9 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   }
 
   if (validContours.length === 0) {
-    kernel.delete(); contours.delete(); hierarchy.delete();
+    kernel.delete();
+    contours.delete();
+    hierarchy.delete();
     return originalMask;
   }
 
@@ -205,7 +224,9 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
 
   const croppedImage = originalMask.roi(new cv.Rect(x, y, width, height));
 
-  kernel.delete(); contours.delete(); hierarchy.delete();
+  kernel.delete();
+  contours.delete();
+  hierarchy.delete();
   originalMask.delete();
 
   return croppedImage;
@@ -226,12 +247,23 @@ function convertToHSV(image: ImageData): cv.Mat {
 // 创建掩码
 function createMask(hsvImage: cv.Mat, lowerBounds: number[], upperBounds: number[]): cv.Mat {
   const mask = new cv.Mat();
-  cv.inRange(hsvImage, cv.matFromArray(1, 3, cv.CV_8UC1, lowerBounds), cv.matFromArray(1, 3, cv.CV_8UC1, upperBounds), mask);
+  cv.inRange(
+    hsvImage,
+    cv.matFromArray(1, 3, cv.CV_8UC1, lowerBounds),
+    cv.matFromArray(1, 3, cv.CV_8UC1, upperBounds),
+    mask
+  );
   return mask;
 }
 
 // 创建颜色掩码
-function createColorMask(hsvImage: cv.Mat, lower1: number[], upper1: number[], lower2?: number[], upper2?: number[]): cv.Mat {
+function createColorMask(
+  hsvImage: cv.Mat,
+  lower1: number[],
+  upper1: number[],
+  lower2?: number[],
+  upper2?: number[]
+): cv.Mat {
   const mask1 = createMask(hsvImage, lower1, upper1);
   if (lower2 && upper2) {
     const mask2 = createMask(hsvImage, lower2, upper2);
