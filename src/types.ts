@@ -21,3 +21,8 @@ export type PieceName =
   | 'black_rook'
   | 'black_cannon'
   | 'black_pawn';
+
+export interface PieceData {
+  type: PieceType;
+  color: PieceColor;
+}

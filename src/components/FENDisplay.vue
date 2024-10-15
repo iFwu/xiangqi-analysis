@@ -9,10 +9,13 @@
 </template>
 
 <script setup lang="ts">
-  interface FENDisplayProps {
-    fenCode: string;
-    onCopy: () => void;
-  }
+  import { useChessStore } from '../stores/chess';
+  import { storeToRefs } from 'pinia';
 
-  defineProps<FENDisplayProps>();
+  const chessStore = useChessStore();
+  const { fenCode } = storeToRefs(chessStore);
+
+  const onCopy = () => {
+    navigator.clipboard.writeText(fenCode.value);
+  };
 </script>

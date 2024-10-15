@@ -1,25 +1,28 @@
 import cv from '@techstark/opencv-js';
-import { ref, onMounted, onUnmounted, markRaw } from 'vue';
-import { PieceName } from '../chessboard/types';
-import { preprocessAllTemplates } from '../chessboard/templateMatching';
+import { onMounted, onUnmounted, shallowRef, markRaw } from 'vue';
+import { PieceName } from '../types';
+import { preprocessAllTemplates } from '../utils/cv/templateMatching';
+import { useChessStore } from '../stores/chess';
+import { storeToRefs } from 'pinia';
 
 export function useOpenCV() {
-  const templates = ref<Record<PieceName, any> | null>(null);
-  const isLoading = ref(true);
+  const templates = shallowRef<Record<PieceName, cv.Mat> | undefined>();
+  const maxRetries = 10;
+  let retries = 0;
+  const chessStore = useChessStore();
+  const { error } = storeToRefs(chessStore);
 
   const onOpenCVReady = async () => {
     console.log('OpenCV.js is ready');
     try {
       const loadedTemplates = await preprocessAllTemplates();
       if (Object.keys(loadedTemplates).length === 0) {
-        console.error('No templates were successfully loaded');
+        error.value = '没有成功加载任何模板';
         return;
       }
       templates.value = markRaw(loadedTemplates);
-    } catch (error) {
-      console.error('Error loading templates:', error);
-    } finally {
-      isLoading.value = false;
+    } catch (err) {
+      error.value = `加载模板时出错: ${(err as Error).message}`;
     }
   };
 
@@ -27,6 +30,18 @@ export function useOpenCV() {
 
   onMounted(() => {
     const initialize = async () => {
+      intervalId = window.setInterval(async () => {
+        if (retries >= maxRetries) {
+          error.value = '在最大重试次数后仍未能加载 OpenCV.js';
+          clearInterval(intervalId);
+          return;
+        }
+        retries++;
+        if (!templates.value && typeof cv !== 'undefined') {
+          clearInterval(intervalId);
+          await onOpenCVReady();
+        }
+      }, 500);
       if (typeof cv !== 'undefined') {
         await new Promise<void>((resolve) => {
           cv.onRuntimeInitialized = resolve;
@@ -34,15 +49,6 @@ export function useOpenCV() {
         await onOpenCVReady();
       } else {
         document.addEventListener('opencv-loaded', onOpenCVReady);
-        intervalId = window.setInterval(() => {
-          if (!isLoading.value && typeof cv !== 'undefined') {
-            if (intervalId) {
-              clearInterval(intervalId);
-              intervalId = undefined;
-            }
-            onOpenCVReady();
-          }
-        }, 500);
       }
     };
 
@@ -56,5 +62,5 @@ export function useOpenCV() {
     }
   });
 
-  return { templates, isLoading };
+  return { templates };
 }

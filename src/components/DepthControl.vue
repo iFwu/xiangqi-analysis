@@ -8,25 +8,16 @@
         type="range"
         min="10"
         max="30"
-        :value="depth"
-        @input="handleDepthChange"
+        v-model.number="depth"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  interface DepthControlProps {
-    depth: number;
-    onDepthChange: (newDepth: number) => void;
-  }
+  import { useChessStore } from '../stores/chess';
+  import { storeToRefs } from 'pinia';
 
-  const props = withDefaults(defineProps<DepthControlProps>(), {
-    depth: 15,
-  });
-
-  const handleDepthChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    props.onDepthChange(Number(target.value));
-  };
+  const chessStore = useChessStore();
+  const { depth } = storeToRefs(chessStore);
 </script>

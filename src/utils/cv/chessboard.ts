@@ -25,11 +25,20 @@ export function detectAndExtractChessboard(
 
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
-  cv.findContours(finalEdges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(
+    finalEdges,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL,
+    cv.CHAIN_APPROX_SIMPLE
+  );
 
   if (contours.size() === 0) {
     console.log('未检测到任何轮廓。');
-    return { gridCells: [], chessboardRect: { x: NaN, y: NaN, width: NaN, height: NaN } };
+    return {
+      gridCells: [],
+      chessboardRect: { x: NaN, y: NaN, width: NaN, height: NaN },
+    };
   }
 
   let maxContourIndex = 0;
@@ -46,7 +55,11 @@ export function detectAndExtractChessboard(
   const rect = cv.boundingRect(maxContour);
   const croppedRegion = img.roi(rect);
 
-  const { gridCells, expandedRect } = segmentChessboard(croppedRegion, expandRatioW, expandRatioH);
+  const { gridCells, expandedRect } = segmentChessboard(
+    croppedRegion,
+    expandRatioW,
+    expandRatioH
+  );
 
   img.delete();
   gray.delete();
@@ -117,8 +130,14 @@ function segmentChessboard(
     };
   }
 
-  const horizontalYPositions = horizontalLines.flatMap((line) => [line[1], line[3]]);
-  const verticalXPositions = verticalLines.flatMap((line) => [line[0], line[2]]);
+  const horizontalYPositions = horizontalLines.flatMap((line) => [
+    line[1],
+    line[3],
+  ]);
+  const verticalXPositions = verticalLines.flatMap((line) => [
+    line[0],
+    line[2],
+  ]);
 
   const resultH = kmeans(
     horizontalYPositions.map((y) => [y]),
@@ -131,15 +150,25 @@ function segmentChessboard(
     { maxIterations: 100 }
   );
 
-  const horizontalClusterCenters = resultH.centroids.map((c) => c[0]).sort((a, b) => a - b);
-  const verticalClusterCenters = resultV.centroids.map((c) => c[0]).sort((a, b) => a - b);
+  const horizontalClusterCenters = resultH.centroids
+    .map((c) => c[0])
+    .sort((a, b) => a - b);
+  const verticalClusterCenters = resultV.centroids
+    .map((c) => c[0])
+    .sort((a, b) => a - b);
 
   const minY = Math.floor(horizontalClusterCenters[0]);
-  const maxY = Math.ceil(horizontalClusterCenters[horizontalClusterCenters.length - 1]);
+  const maxY = Math.ceil(
+    horizontalClusterCenters[horizontalClusterCenters.length - 1]
+  );
   const minX = Math.floor(verticalClusterCenters[0]);
-  const maxX = Math.ceil(verticalClusterCenters[verticalClusterCenters.length - 1]);
+  const maxX = Math.ceil(
+    verticalClusterCenters[verticalClusterCenters.length - 1]
+  );
 
-  const chessboardRegion = croppedRegion.roi(new cv.Rect(minX, minY, maxX - minX, maxY - minY));
+  const chessboardRegion = croppedRegion.roi(
+    new cv.Rect(minX, minY, maxX - minX, maxY - minY)
+  );
 
   const regionW = maxX - minX;
   const regionH = maxY - minY;
@@ -151,7 +180,9 @@ function segmentChessboard(
   const newW = Math.min(croppedRegion.cols - newX, regionW + 2 * expandW);
   const newH = Math.min(croppedRegion.rows - newY, regionH + 2 * expandH);
 
-  const expandedChessboardRegion = croppedRegion.roi(new cv.Rect(newX, newY, newW, newH));
+  const expandedChessboardRegion = croppedRegion.roi(
+    new cv.Rect(newX, newY, newW, newH)
+  );
 
   const rows = 10;
   const cols = 9;
@@ -166,7 +197,9 @@ function segmentChessboard(
       const y2 = (i + 1) * gridHeight;
       const x1 = j * gridWidth;
       const x2 = (j + 1) * gridWidth;
-      const gridCell = expandedChessboardRegion.roi(new cv.Rect(x1, y1, x2 - x1, y2 - y1));
+      const gridCell = expandedChessboardRegion.roi(
+        new cv.Rect(x1, y1, x2 - x1, y2 - y1)
+      );
 
       const canvas = document.createElement('canvas');
       canvas.width = gridCell.cols;

@@ -42,41 +42,47 @@
 <script setup lang="ts">
   import { computed } from 'vue';
   import ChessboardDisplay from './ChessboardDisplay.vue';
-  import { moveToChineseNotation } from '../chessboard/moveHelper';
+  import { moveToChineseNotation } from '../utils/notationUtils';
+  import { useChessStore } from '../stores/chess';
+  import { storeToRefs } from 'pinia';
 
-  interface SolutionDisplayProps {
-    bestMove: string;
-    isCalculating: boolean;
-    error: string | null;
-    onNextMove: () => void;
-    onPreviousMove: () => void;
-    moveHistory: string[];
-    fenCode: string;
-    fenHistory: string[];
-    onFenUpdate: (newFen: string) => void;
-  }
+  const chessStore = useChessStore();
+  const { bestMove, isCalculating, error, moveHistory, fenCode, fenHistory } =
+    storeToRefs(chessStore);
 
-  const props = defineProps<SolutionDisplayProps>();
+  const onNextMove = () => {
+    chessStore.handleNextMove();
+  };
+
+  const onPreviousMove = () => {
+    chessStore.handlePreviousMove();
+  };
+
+  const onFenUpdate = (newFen: string) => {
+    chessStore.setFenCode(newFen);
+  };
 
   const currentMoveColor = computed(() =>
-    props.moveHistory.length % 2 === 0 ? '红方' : '黑方'
+    moveHistory.value.length % 2 === 0 ? '红方' : '黑方'
   );
-  const currentMoveNumber = computed(() => props.moveHistory.length + 1);
+
+  const currentMoveNumber = computed(() => moveHistory.value.length + 1);
 
   const moveItems = computed(() =>
-    props.moveHistory.map((move, index) => {
-      const fenBeforeMove = props.fenHistory[index];
+    moveHistory.value.map((move, index) => {
+      const fenBeforeMove = fenHistory.value[index];
       return moveToChineseNotation(fenBeforeMove, move);
     })
   );
 
   const isGameOver = computed(
-    () => props.bestMove === 'red_wins' || props.bestMove === 'black_wins'
+    () => bestMove.value === 'red_wins' || bestMove.value === 'black_wins'
   );
+
   const gameOverMessage = computed(() =>
-    props.bestMove === 'red_wins'
+    bestMove.value === 'red_wins'
       ? '红方胜'
-      : props.bestMove === 'black_wins'
+      : bestMove.value === 'black_wins'
         ? '黑方胜'
         : ''
   );

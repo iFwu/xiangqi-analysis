@@ -1,8 +1,11 @@
-import { PieceColor } from './types';
+import { PieceColor } from '../../types';
 import cv from '@techstark/opencv-js';
 
 // 检测格子中是否有棋子
-export function detectPieceInCell(cellImage: ImageData, contrastThreshold = 30): boolean {
+export function detectPieceInCell(
+  cellImage: ImageData,
+  contrastThreshold = 30
+): boolean {
   const mat = cv.matFromImageData(cellImage);
   const grayCell = new cv.Mat();
   cv.cvtColor(mat, grayCell, cv.COLOR_RGBA2GRAY);
@@ -49,7 +52,10 @@ export function detectPieceColor(cellImage: ImageData): PieceColor {
 }
 
 // 处理棋子图像
-export function processPiece(cellImage: ImageData, pieceColor: PieceColor): ImageData {
+export function processPiece(
+  cellImage: ImageData,
+  pieceColor: PieceColor
+): ImageData {
   let mask: cv.Mat;
   if (pieceColor === 'red') {
     mask = extractRedPieceMask(cellImage);
@@ -117,7 +123,13 @@ function extractBlackPieceMask(cellImage: ImageData): cv.Mat {
 
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
-  cv.findContours(morphedEdges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(
+    morphedEdges,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL,
+    cv.CHAIN_APPROX_SIMPLE
+  );
 
   let maskBlack: cv.Mat;
   if (contours.size() === 0) {
@@ -152,11 +164,21 @@ function extractBlackPieceMask(cellImage: ImageData): cv.Mat {
 
     maskBlack = createColorMask(hsvImage, [0, 0, 0], [180, 255, 80]);
 
-    const largestContourMask = cv.Mat.zeros(maskBlack.rows, maskBlack.cols, cv.CV_8UC1);
+    const largestContourMask = cv.Mat.zeros(
+      maskBlack.rows,
+      maskBlack.cols,
+      cv.CV_8UC1
+    );
     const contourVector = new cv.MatVector();
     contourVector.push_back(scaledContour);
 
-    cv.drawContours(largestContourMask, contourVector, 0, new cv.Scalar(255), cv.FILLED);
+    cv.drawContours(
+      largestContourMask,
+      contourVector,
+      0,
+      new cv.Scalar(255),
+      cv.FILLED
+    );
 
     cv.bitwise_and(maskBlack, largestContourMask, maskBlack);
 
@@ -181,11 +203,24 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
   const originalMask = maskImage.clone();
 
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-  cv.morphologyEx(maskImage, maskImage, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 3);
+  cv.morphologyEx(
+    maskImage,
+    maskImage,
+    cv.MORPH_CLOSE,
+    kernel,
+    new cv.Point(-1, -1),
+    3
+  );
 
   const contours = new cv.MatVector();
   const hierarchy = new cv.Mat();
-  cv.findContours(maskImage, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(
+    maskImage,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL,
+    cv.CHAIN_APPROX_SIMPLE
+  );
 
   if (contours.size() === 0) {
     kernel.delete();
@@ -196,7 +231,11 @@ function extractLargestContourRegion(maskImage: cv.Mat): cv.Mat {
 
   const imgArea = maskImage.cols * maskImage.rows;
 
-  const validContours: { contour: cv.Mat; contourArea: number; rect: cv.Rect }[] = [];
+  const validContours: {
+    contour: cv.Mat;
+    contourArea: number;
+    rect: cv.Rect;
+  }[] = [];
   for (let i = 0; i < contours.size(); i++) {
     const contour = contours.get(i);
     const rect = cv.boundingRect(contour);
@@ -245,7 +284,11 @@ function convertToHSV(image: ImageData): cv.Mat {
 }
 
 // 创建掩码
-function createMask(hsvImage: cv.Mat, lowerBounds: number[], upperBounds: number[]): cv.Mat {
+function createMask(
+  hsvImage: cv.Mat,
+  lowerBounds: number[],
+  upperBounds: number[]
+): cv.Mat {
   const mask = new cv.Mat();
   cv.inRange(
     hsvImage,

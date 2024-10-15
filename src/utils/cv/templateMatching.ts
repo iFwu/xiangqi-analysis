@@ -1,11 +1,15 @@
 import cv from '@techstark/opencv-js';
-import { PieceType, PieceColor, PieceName } from './types';
+import { PieceType, PieceColor, PieceName } from '../../types';
 
 // 使用 import.meta.glob 预加载所有模板图片
-const templateImages = import.meta.glob('/assets/chess_templates/*.png', { eager: true });
+const templateImages = import.meta.glob('/assets/chess_templates/*.png', {
+  eager: true,
+});
 
 // 预处理所有模板
-export async function preprocessAllTemplates(): Promise<Record<PieceName, cv.Mat>> {
+export async function preprocessAllTemplates(): Promise<
+  Record<PieceName, cv.Mat>
+> {
   const templates: Partial<Record<PieceName, cv.Mat>> = {};
 
   for (const [path, module] of Object.entries(templateImages)) {
@@ -47,22 +51,28 @@ export function templateMatchingForPiece(
     cellImage.copyTo(grayCellImage);
   }
 
-  const colorSpecificTemplates = Object.entries(templates).filter(([pieceName, _]) => {
-    if (pieceColor === 'red') return pieceName.startsWith('red_');
-    if (pieceColor === 'black') return pieceName.startsWith('black_');
-    return true;
-  });
+  const colorSpecificTemplates = Object.entries(templates).filter(
+    ([pieceName, _]) => {
+      if (pieceColor === 'red') return pieceName.startsWith('red_');
+      if (pieceColor === 'black') return pieceName.startsWith('black_');
+      return true;
+    }
+  );
 
   for (const [pieceName, template] of colorSpecificTemplates) {
     const resizedTemplate = new cv.Mat();
     cv.resize(template, resizedTemplate, new cv.Size(cellSize[0], cellSize[1]));
 
     const result = new cv.Mat();
-    cv.matchTemplate(grayCellImage, resizedTemplate, result, cv.TM_CCOEFF_NORMED);
+    cv.matchTemplate(
+      grayCellImage,
+      resizedTemplate,
+      result,
+      cv.TM_CCOEFF_NORMED
+    );
 
     // @ts-ignore 保留这个注释
     const minMax = cv.minMaxLoc(result);
-
     if (minMax.maxVal > maxMatchValue) {
       maxMatchValue = minMax.maxVal;
       const pieceTypeMap: Record<string, PieceType> = {

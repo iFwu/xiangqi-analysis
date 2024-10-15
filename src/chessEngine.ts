@@ -37,6 +37,7 @@ export class ChessEngine {
         this.engineReady = true;
       } catch (error) {
         console.error('Failed to initialize Pikafish:', error);
+        throw error;
       }
     }
   }

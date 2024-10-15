@@ -53,6 +53,7 @@ export default defineConfig({
   resolve: {
     alias: {
       pikafish: 'third_party/pikafish.js',
+      '@': './src',
     },
   },
   optimizeDeps: {

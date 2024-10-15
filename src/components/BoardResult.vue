@@ -16,7 +16,7 @@
         :style="{
           left: `${leftOffset}px`,
           width: `${stretchedWidth}px`,
-          height: `${originalImageSize.height * scale}px`,
+          height: `${(originalImageSize?.height || 0) * scale}px`,
           marginTop: `${-displayY * scale}px`,
         }"
       />
@@ -26,46 +26,34 @@
 
 <script setup lang="ts">
   import { computed } from 'vue';
+  import { useChessStore } from '../stores/chess';
+  import { storeToRefs } from 'pinia';
 
-  interface BoardResultProps {
-    overlayImageSrc: string;
-    chessboardRect?: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-    originalImageSize?: {
-      width: number;
-      height: number;
-    };
-  }
-  const props = withDefaults(defineProps<BoardResultProps>(), {
-    chessboardRect: () => ({ x: 0, y: 0, width: 0, height: 0 }),
-    originalImageSize: () => ({ width: 0, height: 0 }),
-  });
+  const chessStore = useChessStore();
+  const { overlayImageSrc, chessboardRect, originalImageSize } =
+    storeToRefs(chessStore);
 
   const MAX_WIDTH = 360; // 定义最大宽度
   const padding = 15; // 添加间隙
 
   const displayX = computed(() =>
-    Math.max(0, props.chessboardRect.x - padding)
+    Math.max(0, (chessboardRect.value?.x || 0) - padding)
   );
   const displayY = computed(() =>
-    Math.max(0, props.chessboardRect.y - padding)
+    Math.max(0, (chessboardRect.value?.y || 0) - padding)
   );
 
   const displayWidth = computed(() =>
     Math.min(
-      props.originalImageSize.width - displayX.value,
-      props.chessboardRect.width + 2 * padding
+      (originalImageSize.value?.width || 0) - displayX.value,
+      (chessboardRect.value?.width || 0) + 2 * padding
     )
   );
 
   const displayHeight = computed(() =>
     Math.min(
-      props.originalImageSize.height - displayY.value,
-      props.chessboardRect.height + 2 * padding
+      (originalImageSize.value?.height || 0) - displayY.value,
+      (chessboardRect.value?.height || 0) + 2 * padding
     )
   );
 
@@ -74,7 +62,7 @@
   );
 
   const horizontalScale = computed(
-    () => props.originalImageSize.width / displayWidth.value
+    () => (originalImageSize.value?.width || 0) / displayWidth.value
   );
 
   const finalWidth = computed(() => displayWidth.value * scale.value);

@@ -1,6 +1,10 @@
 import cv from '@techstark/opencv-js';
 
-export function displayImage(title: string, image: cv.Mat | ImageData, index: number) {
+export function displayImage(
+  title: string,
+  image: cv.Mat | ImageData,
+  index: number
+) {
   console.log(`%c${title} (格子 ${index}):`, 'color: blue; font-weight: bold;');
 
   const canvas = document.createElement('canvas');

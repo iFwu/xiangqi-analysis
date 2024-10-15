@@ -1,4 +1,4 @@
-import { PieceColor, PieceName, PieceType } from './types';
+import { PieceColor, PieceName, PieceType } from '../../types';
 
 const pieceTypeToChineseChar: Record<PieceName, string> = {
   red_king: '帥',
@@ -20,7 +20,11 @@ const pieceTypeToChineseChar: Record<PieceName, string> = {
 export function createOverlayImage(
   originalImage: HTMLImageElement,
   chessboardRect: { x: number; y: number; width: number; height: number },
-  detectedPieces: { position: [number, number]; color: PieceColor; type: PieceType }[]
+  detectedPieces: {
+    position: [number, number];
+    color: PieceColor;
+    type: PieceType;
+  }[]
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = originalImage.width;
@@ -31,7 +35,12 @@ export function createOverlayImage(
 
   ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
   ctx.lineWidth = 2;
-  ctx.strokeRect(chessboardRect.x, chessboardRect.y, chessboardRect.width, chessboardRect.height);
+  ctx.strokeRect(
+    chessboardRect.x,
+    chessboardRect.y,
+    chessboardRect.width,
+    chessboardRect.height
+  );
 
   const cellWidth = chessboardRect.width / 9;
   const cellHeight = chessboardRect.height / 10;
@@ -41,14 +50,19 @@ export function createOverlayImage(
     const x = chessboardRect.x + col * cellWidth;
     const y = chessboardRect.y + row * cellHeight;
 
-    ctx.strokeStyle = piece.color === 'red' ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    ctx.strokeStyle =
+      piece.color === 'red' ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, cellWidth, cellHeight);
 
     if (piece.type && piece.type !== 'none') {
-      const pieceName = `${piece.color}_${pieceTypeToFullName(piece.type)}` as PieceName;
+      const pieceName =
+        `${piece.color}_${pieceTypeToFullName(piece.type)}` as PieceName;
       const chineseChar = pieceTypeToChineseChar[pieceName] || '';
-      ctx.fillStyle = piece.color === 'red' ? 'rgba(255, 50, 50, 0.9)' : 'rgba(50, 50, 50, 0.9)';
+      ctx.fillStyle =
+        piece.color === 'red'
+          ? 'rgba(255, 50, 50, 0.9)'
+          : 'rgba(50, 50, 50, 0.9)';
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';

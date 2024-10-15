@@ -19,6 +19,7 @@
   "dependencies": {
     "@techstark/opencv-js": "^4.10.0-release.1",
     "ml-kmeans": "^6.0.0",
+    "pinia": "^2.2.4",
     "vue": "^3.5.12"
   },
   "devDependencies": {

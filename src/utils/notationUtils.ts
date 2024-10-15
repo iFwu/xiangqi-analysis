@@ -1,3 +1,5 @@
+import { PieceColor, PieceData, PieceType } from '../types';
+
 export function updateFEN(fen: string, move: string): string {
   // 解析 FEN 字符串
   const [board_fen, side_to_move] = fen.trim().split(/\s+/);
@@ -43,7 +45,12 @@ export function updateFEN(fen: string, move: string): string {
   const to_file = files.indexOf(to_file_char);
   const to_rank = 9 - parseInt(to_rank_char, 10);
 
-  if (from_file === -1 || to_file === -1 || isNaN(from_rank) || isNaN(to_rank)) {
+  if (
+    from_file === -1 ||
+    to_file === -1 ||
+    isNaN(from_rank) ||
+    isNaN(to_rank)
+  ) {
     throw new Error('无效的走棋格式');
   }
 
@@ -108,7 +115,18 @@ export function moveToChineseNotation(fen: string, move: string): string {
   };
 
   const files = 'abcdefghi';
-  const chineseNumbers = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  const chineseNumbers = [
+    '零',
+    '一',
+    '二',
+    '三',
+    '四',
+    '五',
+    '六',
+    '七',
+    '八',
+    '九',
+  ];
 
   // 解析 FEN，构建棋盘
   const [board_fen] = fen.trim().split(/\s+/);
@@ -146,7 +164,9 @@ export function moveToChineseNotation(fen: string, move: string): string {
   const pieceName = pieceSymbols[piece];
 
   // 获取列表示
-  const fileNumber = isRed ? chineseNumbers[9 - from_file] : ` ${from_file + 1} `;
+  const fileNumber = isRed
+    ? chineseNumbers[9 - from_file]
+    : ` ${from_file + 1} `;
 
   // 判断移动方向和步数
   let action = '';
@@ -154,7 +174,13 @@ export function moveToChineseNotation(fen: string, move: string): string {
 
   if (from_file === to_file) {
     // 直走，进或退
-    action = isRed ? (from_rank > to_rank ? '进' : '退') : from_rank < to_rank ? '进' : '退';
+    action = isRed
+      ? from_rank > to_rank
+        ? '进'
+        : '退'
+      : from_rank < to_rank
+        ? '进'
+        : '退';
     actionNumber = isRed
       ? chineseNumbers[Math.abs(from_rank - to_rank)]
       : ` ${Math.abs(from_rank - to_rank)} `;
@@ -172,10 +198,110 @@ export function moveToChineseNotation(fen: string, move: string): string {
     pieceName === '仕' ||
     pieceName === '士'
   ) {
-    action = isRed ? (from_rank > to_rank ? '进' : '退') : from_rank < to_rank ? '进' : '退';
+    action = isRed
+      ? from_rank > to_rank
+        ? '进'
+        : '退'
+      : from_rank < to_rank
+        ? '进'
+        : '退';
     actionNumber = isRed ? chineseNumbers[9 - to_file] : ` ${to_file + 1} `;
   }
 
   // 构建中文走棋表示
   return `${pieceName}${fileNumber}${action}${actionNumber}`;
 }
+
+const mapPieceTypeToFEN = (pieceType: PieceType, color: PieceColor): string => {
+  const mapping: Record<PieceType, string> = {
+    k: color === 'red' ? 'K' : 'k',
+    a: color === 'red' ? 'A' : 'a',
+    b: color === 'red' ? 'B' : 'b',
+    n: color === 'red' ? 'N' : 'n',
+    r: color === 'red' ? 'R' : 'r',
+    c: color === 'red' ? 'C' : 'c',
+    p: color === 'red' ? 'P' : 'p',
+    none: '',
+  };
+  return mapping[pieceType];
+};
+
+export function generateFenFromPieces(
+  pieceLayout: string[][],
+  nextMoveColor: PieceColor = 'red'
+): string {
+  const fenRows: string[] = [];
+
+  for (const row of pieceLayout) {
+    let emptyCount = 0;
+    let fenRow = '';
+
+    for (const piece of row) {
+      if (piece === 'none') {
+        emptyCount++;
+      } else {
+        if (emptyCount > 0) {
+          fenRow += emptyCount.toString();
+          emptyCount = 0;
+        }
+        const [color, type] = piece.split('_') as [PieceColor, PieceType];
+        fenRow += mapPieceTypeToFEN(type, color);
+      }
+    }
+
+    if (emptyCount > 0) {
+      fenRow += emptyCount.toString();
+    }
+
+    fenRows.push(fenRow);
+    console.log(`FEN row: ${fenRow}`);
+  }
+
+  const fenString = fenRows.join('/');
+  const nextMove = nextMoveColor === 'red' ? 'w' : 'b';
+  const fullFenString = `${fenString} ${nextMove} - - 0 1`;
+  console.log(`Generated FEN: ${fullFenString}`);
+
+  return fullFenString;
+}
+
+export function parseFEN(fen: string): (PieceData | null)[][] {
+  const rows = fen.split(' ')[0].split('/');
+  const board: (PieceData | null)[][] = [];
+
+  for (let row of rows) {
+    const boardRow: (PieceData | null)[] = [];
+    for (let char of row) {
+      if (isNaN(parseInt(char))) {
+        const color: PieceColor = char === char.toUpperCase() ? 'red' : 'black';
+        const type: PieceType = char.toLowerCase() as PieceType;
+        boardRow.push({ color, type });
+      } else {
+        const emptySquares = parseInt(char);
+        for (let i = 0; i < emptySquares; i++) {
+          boardRow.push(null);
+        }
+      }
+    }
+    board.push(boardRow);
+  }
+
+  return board;
+}
+
+export const pieceMap: { [key: string]: string } = {
+  k: '将',
+  a: '士',
+  b: '象',
+  n: '馬',
+  r: '車',
+  c: '砲',
+  p: '卒',
+  K: '帥',
+  A: '仕',
+  B: '相',
+  N: '傌',
+  R: '俥',
+  C: '炮',
+  P: '兵',
+};
