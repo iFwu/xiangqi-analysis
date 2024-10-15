@@ -19,12 +19,17 @@ export const useChessStore = defineStore('chess', () => {
   const error = ref<string | null>(null);
   const depth = ref(Number(localStorage.getItem('depth')) || 15);
 
+  const setError = (errorMessage: string) => {
+    console.error(errorMessage);
+    error.value = errorMessage;
+  };
+
   const setFenCode = (fen: string) => {
     try {
       fenCode.value = fen;
       fenHistory.value.push(fen);
     } catch (err) {
-      error.value = `设置 FEN 码时出错: ${(err as Error).message}`;
+      setError(`设置 FEN 码时出错: ${(err as Error).message}`);
     }
   };
 
@@ -46,7 +51,7 @@ export const useChessStore = defineStore('chess', () => {
       moveHistory.value.push(bestMove.value);
       setBestMove('');
     } catch (err) {
-      error.value = `执行下一步时出错: ${(err as Error).message}`;
+      setError(`执行下一步时出错: ${(err as Error).message}`);
     }
   };
 
@@ -85,6 +90,7 @@ export const useChessStore = defineStore('chess', () => {
     isCalculating,
     error,
     depth,
+    setError,
     setFenCode,
     setBestMove,
     handleNextMove,

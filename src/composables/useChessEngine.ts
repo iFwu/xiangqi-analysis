@@ -6,7 +6,7 @@ import { storeToRefs } from 'pinia';
 export function useChessEngine() {
   const isEngineReady = ref(false);
   const chessStore = useChessStore();
-  const { isCalculating, error } = storeToRefs(chessStore);
+  const { isCalculating } = storeToRefs(chessStore);
 
   const engine = new ChessEngine();
 
@@ -15,7 +15,7 @@ export function useChessEngine() {
       await engine.initEngine();
       isEngineReady.value = true;
     } catch (err) {
-      error.value = (err as Error).message;
+      chessStore.setError(`初始化引擎失败: ${(err as Error).message}`);
     }
   };
 
@@ -23,12 +23,11 @@ export function useChessEngine() {
 
   const fetchBestMove = async (fen: string, depth: number) => {
     isCalculating.value = true;
-    error.value = null;
     try {
       const bestMove = await engine.getBestMove(fen, depth);
       chessStore.setBestMove(bestMove);
     } catch (err) {
-      error.value = (err as Error).message;
+      chessStore.setError(`获取最佳移动失败: ${(err as Error).message}`);
     } finally {
       isCalculating.value = false;
     }

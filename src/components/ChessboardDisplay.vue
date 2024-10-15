@@ -20,12 +20,8 @@
     drawPiece,
   } from '../utils/drawUtils';
   import { useChessStore } from '../stores/chess';
-  import { storeToRefs } from 'pinia';
 
-  // 解构响应式状态和直接引用方法
   const chessStore = useChessStore();
-  const { fenCode, bestMove, error } = storeToRefs(chessStore);
-  const { setFenCode } = chessStore; // 移除 setError
 
   const canvasRef = ref<HTMLCanvasElement | null>(null);
   const board = ref<(PieceData | null)[][]>([]);
@@ -52,13 +48,13 @@
         fontLoaded.value = true;
       })
       .catch((err) => {
-        error.value = `加载字体失败: ${err.message}`;
+        chessStore.setError(`加载字体失败: ${err.message}`);
       });
 
     try {
-      board.value = parseFEN(fenCode.value);
+      board.value = parseFEN(chessStore.fenCode);
     } catch (err) {
-      error.value = `解析 FEN 码失败: ${(err as Error).message}`;
+      chessStore.setError(`解析 FEN 码失败: ${(err as Error).message}`);
     }
 
     const handleResize = () => {
@@ -71,18 +67,18 @@
     canvasRef.value?.addEventListener('click', handleCanvasClick);
 
     watch(
-      () => fenCode.value, // 监听 ref 的值变化
+      () => chessStore.fenCode,
       (newFen) => {
         try {
           board.value = parseFEN(newFen);
         } catch (err) {
-          error.value = `解析 FEN 码失败: ${(err as Error).message}`;
+          chessStore.setError(`解析 FEN 码失败: ${(err as Error).message}`);
         }
       }
     );
 
     watch(
-      [board, () => bestMove.value, scale, fontLoaded, selectedPosition],
+      [board, () => chessStore.bestMove, scale, fontLoaded, selectedPosition],
       () => {
         nextTick(() => {
           if (canvasRef.value) {
@@ -121,11 +117,11 @@
         const move = `${fromSquare}${toSquare}`;
 
         try {
-          const newFen = updateFEN(fenCode.value, move);
-          setFenCode(newFen);
+          const newFen = updateFEN(chessStore.fenCode, move);
+          chessStore.setFenCode(newFen);
           selectedPosition.value = null;
         } catch (err) {
-          error.value = `更新 FEN 码失败: ${(err as Error).message}`;
+          chessStore.setError(`更新 FEN 码失败: ${(err as Error).message}`);
         }
       } else {
         selectedPosition.value = [row, col];
@@ -153,8 +149,8 @@
       });
     });
 
-    if (bestMove.value) {
-      drawArrow(ctx, bestMove.value);
+    if (chessStore.bestMove) {
+      drawArrow(ctx, chessStore.bestMove);
     }
   }
 </script>
