@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import preact from '@preact/preset-vite';
+import vue from '@vitejs/plugin-vue';
 import cdn from 'vite-plugin-cdn2';
 import { Mode, plugin as markdown } from 'vite-plugin-markdown';
 
@@ -12,7 +12,7 @@ declare const process: {
 
 export default defineConfig({
   plugins: [
-    preact(),
+    vue(),
     cdn({
       modules: [
         {
@@ -29,13 +29,14 @@ export default defineConfig({
             injectTo: 'body',
             attrs: {
               async: true,
-              onload: 'cv.onRuntimeInitialized = () => { document.dispatchEvent(new Event(\'opencv-loaded\')); }',
+              onload:
+                "cv.onRuntimeInitialized = () => { document.dispatchEvent(new Event('opencv-loaded')); }",
             },
           };
         },
       },
     }),
-    markdown({ mode: [ Mode.HTML ] }),
+    markdown({ mode: [Mode.HTML] }),
   ],
   server: {
     // hmr: false,
@@ -51,16 +52,18 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'pikafish': 'third_party/pikafish.js'
+      pikafish: 'third_party/pikafish.js',
     },
   },
   optimizeDeps: {
-    include: [ 'pikafish' ],
+    include: ['pikafish'],
   },
   // 根据环境动态设置 base
   base: process.env.GITHUB_PAGES === 'true' ? '/xiangqi-analysis/' : '/',
   define: {
-    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(process.env.VITE_GIT_COMMIT_HASH),
+    'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(
+      process.env.VITE_GIT_COMMIT_HASH
+    ),
   },
   assetsInclude: ['**/*.woff2'],
 });

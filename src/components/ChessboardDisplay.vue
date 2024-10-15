@@ -1,36 +1,47 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'preact/hooks';
-import { PieceType, PieceColor } from '../chessboard/types';
-import { updateFEN } from '../chessboard/moveHelper';
-import LiSuFontUrl from '/assets/LiSu.woff2?url';
+<template>
+  <div style="width: 100%; display: flex; justify-content: center">
+    <canvas
+      ref="canvasRef"
+      class="chessboard"
+      style="max-width: 80vw; height: auto"
+    ></canvas>
+  </div>
+</template>
 
-interface ChessboardDisplayProps {
-  fen: string;
-  bestMove: string;
-  onFenUpdate: (newFen: string) => void;
-}
+<script setup lang="ts">
+  import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+  import { PieceType, PieceColor } from '../chessboard/types';
+  import { updateFEN } from '../chessboard/moveHelper';
+  import LiSuFontUrl from '/assets/LiSu.woff2?url';
 
-interface PieceData {
-  type: PieceType;
-  color: PieceColor;
-}
+  interface ChessboardDisplayProps {
+    fen: string;
+    bestMove: string;
+    onFenUpdate: (newFen: string) => void;
+  }
 
-const CELL_SIZE = 40;
+  interface PieceData {
+    type: PieceType;
+    color: PieceColor;
+  }
 
-const getScale = () => {
-  const maxWidth = window.innerWidth * 0.8;
-  const originalWidth = 8 * CELL_SIZE + CELL_SIZE;
-  const dpr = window.devicePixelRatio;
-  return Math.min(1, maxWidth / originalWidth) * dpr;
-};
+  const props = defineProps<ChessboardDisplayProps>();
 
-export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisplayProps) {
-  const [board, setBoard] = useState<(PieceData | null)[][]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [scale, setScale] = useState(getScale());
-  const [fontLoaded, setFontLoaded] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<[number, number] | null>(null);
+  const CELL_SIZE = 40;
+  const canvasRef = ref<HTMLCanvasElement | null>(null);
+  const board = ref<(PieceData | null)[][]>([]);
+  const scale = ref(getScale());
+  const fontLoaded = ref(false);
+  const selectedPosition = ref<[number, number] | null>(null);
 
-  useEffect(() => {
+  function getScale() {
+    const maxWidth = window.innerWidth * 0.8;
+    const originalWidth = 8 * CELL_SIZE + CELL_SIZE;
+    const dpr = window.devicePixelRatio;
+    return Math.min(1, maxWidth / originalWidth) * dpr;
+  }
+
+  onMounted(() => {
     const font = new FontFace('LiSu', `url(${LiSuFontUrl})`);
     font
       .load()
@@ -39,69 +50,29 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
         return document.fonts.ready;
       })
       .then(() => {
-        setFontLoaded(true);
+        fontLoaded.value = true;
       })
       .catch((error) => console.error('Failed to load font:', error));
-  }, []);
 
-  useEffect(() => {
-    const newBoard = parseFEN(fen);
-    setBoard(newBoard);
-  }, [fen]);
+    board.value = parseFEN(props.fen);
 
-  useLayoutEffect(() => {
     let lastWidth = window.innerWidth;
-    function handleResize() {
+
+    const handleResize = () => {
       const currentWidth = window.innerWidth;
       if (currentWidth !== lastWidth || lastWidth === undefined) {
-        if (canvasRef.current) {
-          setScale(getScale());
+        if (canvasRef.value) {
+          scale.value = getScale();
         }
         lastWidth = currentWidth;
       }
-    }
+    };
 
-    handleResize(); // Set scale on initial load
+    handleResize(); // 初始加载时设置缩放比例
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
-  useEffect(() => {
-    if (!canvasRef.current || !fontLoaded) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // 清除整个 Canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 绘制棋盘
-    drawChessboard(ctx, scale);
-
-    // 绘制棋子
-
-    board.forEach((row, i) => {
-      row.forEach((piece, j) => {
-        if (piece) {
-          const isSelected =
-            (selectedPosition && selectedPosition[0] === i && selectedPosition[1] === j) ?? false;
-          drawPiece(ctx, piece, [i, j], scale, isSelected);
-        }
-      });
-    });
-
-    // 绘制箭头
-    if (bestMove) {
-      drawArrow(ctx, bestMove);
-    }
-  }, [board, bestMove, scale, fontLoaded, selectedPosition]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    function handleCanvasClick(event: MouseEvent) {
-      const canvas = canvasRef.current;
+    const handleCanvasClick = (event: MouseEvent) => {
+      const canvas = canvasRef.value;
       if (!canvas) return;
 
       const rect = canvas.getBoundingClientRect();
@@ -111,39 +82,56 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
       const x = (event.clientX - rect.left) * scaleX;
       const y = (event.clientY - rect.top) * scaleY;
 
-      const margin = (CELL_SIZE / 2) * scale;
+      const margin = (CELL_SIZE / 2) * scale.value;
 
       // 计算最近的交叉点
-      const col = Math.round((x - margin) / (CELL_SIZE * scale));
-      const row = Math.round((y - margin) / (CELL_SIZE * scale));
+      const col = Math.round((x - margin) / (CELL_SIZE * scale.value));
+      const row = Math.round((y - margin) / (CELL_SIZE * scale.value));
 
       console.log(`Clicked intersection: col: ${col}, row: ${row}`);
 
       // 检查是否在棋盘范围内
       if (col >= 0 && col <= 8 && row >= 0 && row <= 9) {
-        if (selectedPosition) {
+        if (selectedPosition.value) {
           // 如果已经有选中的棋子，尝试移动
-          const [fromRow, fromCol] = selectedPosition;
+          const [fromRow, fromCol] = selectedPosition.value;
           const fromSquare = `${String.fromCharCode(97 + fromCol)}${9 - fromRow}`;
           const toSquare = `${String.fromCharCode(97 + col)}${9 - row}`;
           const move = `${fromSquare}${toSquare}`;
 
-          const newFen = updateFEN(fen, move);
-          onFenUpdate(newFen);
-          setSelectedPosition(null);
+          const newFen = updateFEN(props.fen, move);
+          props.onFenUpdate(newFen);
+          selectedPosition.value = null;
         } else {
           // 如果没有选中的棋子，选中当前位置
-          setSelectedPosition([row, col]);
+          selectedPosition.value = [row, col];
         }
       }
-    }
-
-    canvas.addEventListener('click', handleCanvasClick);
-
-    return () => {
-      canvas.removeEventListener('click', handleCanvasClick);
     };
-  }, [canvasRef, scale, selectedPosition, fen, onFenUpdate]);
+
+    canvasRef.value?.addEventListener('click', handleCanvasClick);
+
+    watch(
+      () => props.fen,
+      (newFen) => {
+        board.value = parseFEN(newFen);
+      }
+    );
+
+    watch(
+      [board, () => props.bestMove, scale, fontLoaded, selectedPosition],
+      () => {
+        nextTick(() => {
+          draw();
+        });
+      }
+    );
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', handleResize);
+      canvasRef.value?.removeEventListener('click', handleCanvasClick);
+    });
+  });
 
   function parseFEN(fen: string): (PieceData | null)[][] {
     const rows = fen.split(' ')[0].split('/');
@@ -153,7 +141,8 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
       const boardRow: (PieceData | null)[] = [];
       for (let char of row) {
         if (isNaN(parseInt(char))) {
-          const color: PieceColor = char === char.toUpperCase() ? 'red' : 'black';
+          const color: PieceColor =
+            char === char.toUpperCase() ? 'red' : 'black';
           const type: PieceType = char.toLowerCase() as PieceType;
           boardRow.push({ color, type });
         } else {
@@ -169,8 +158,39 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     return board;
   }
 
+  function draw() {
+    const canvas = canvasRef.value;
+    if (!canvas || !fontLoaded.value) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 清除整个 Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制棋盘
+    drawChessboard(ctx, scale.value);
+
+    // 绘制棋子
+    board.value.forEach((row, i) => {
+      row.forEach((piece, j) => {
+        if (piece) {
+          const isSelected = !!(
+            selectedPosition.value &&
+            selectedPosition.value[0] === i &&
+            selectedPosition.value[1] === j
+          );
+          drawPiece(ctx, piece, [i, j], scale.value, isSelected);
+        }
+      });
+    });
+
+    // 绘制箭头
+    if (props.bestMove) {
+      drawArrow(ctx, props.bestMove);
+    }
+  }
   function drawChessboard(ctx: CanvasRenderingContext2D, scale: number) {
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.value;
     if (!canvas) return;
 
     const margin = CELL_SIZE / 2;
@@ -310,10 +330,18 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     // 绘制红方（下方）列标记，从右左
     const redColumns = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
     for (let i = 0; i < 9; i++) {
-      ctx.fillText(redColumns[i], (8 - i) * CELL_SIZE + margin, boardHeight - margin / 2);
+      ctx.fillText(
+        redColumns[i],
+        (8 - i) * CELL_SIZE + margin,
+        boardHeight - margin / 2
+      );
     }
     for (let i = 0; i < 9; i++) {
-      ctx.fillText((9 - i).toString(), (8 - i) * CELL_SIZE + margin, margin / 2);
+      ctx.fillText(
+        (9 - i).toString(),
+        (8 - i) * CELL_SIZE + margin,
+        margin / 2
+      );
     }
   }
 
@@ -352,13 +380,22 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     ctx.font = '22px "LiSu", sans-serif';
     const pieceChar = piece.type.toUpperCase();
     const pieceSymbol =
-      piece.color === 'red' ? pieceMap[pieceChar] : pieceMap[pieceChar.toLowerCase()];
+      piece.color === 'red'
+        ? pieceMap[pieceChar]
+        : pieceMap[pieceChar.toLowerCase()];
 
     // 保存当前绘图状态
     ctx.save();
 
     // 更新变换以使用新的缩放比例
-    ctx.setTransform(scale, 0, 0, 1.3 * scale, centerX * scale, centerY * scale);
+    ctx.setTransform(
+      scale,
+      0,
+      0,
+      1.3 * scale,
+      centerX * scale,
+      centerY * scale
+    );
 
     // 绘制文字，注意坐标现在是相对于变换后的原点
     ctx.textAlign = 'center';
@@ -452,7 +489,6 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     ctx.fill();
   }
 
-  // 棋子符号映射表
   const pieceMap: { [key: string]: string } = {
     k: '将',
     a: '士',
@@ -469,17 +505,4 @@ export function ChessboardDisplay({ fen, bestMove, onFenUpdate }: ChessboardDisp
     C: '炮',
     P: '兵',
   };
-
-  return (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-      <canvas
-        ref={canvasRef}
-        className="chessboard"
-        style={{
-          maxWidth: '80vw',
-          height: 'auto',
-        }}
-      />
-    </div>
-  );
-}
+</script>
