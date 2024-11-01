@@ -21,6 +21,7 @@ export function useOpenCV() {
       templates.value = markRaw(loadedTemplates);
     } catch (err) {
       chessStore.setError(`加载模板时出错: ${(err as Error).message}`);
+      throw err;
     }
   };
 
@@ -35,7 +36,11 @@ export function useOpenCV() {
           return;
         }
         retries++;
-        if (!templates.value && typeof cv !== 'undefined') {
+        if (
+          !templates.value &&
+          typeof cv !== 'undefined' &&
+          typeof cv.Mat === 'function'
+        ) {
           clearInterval(intervalId);
           await onOpenCVReady();
         } else if (templates.value) {
