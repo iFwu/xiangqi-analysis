@@ -154,3 +154,11 @@
     }
   }
 </script>
+
+<style scoped>
+  .chessboard {
+    display: inline-block;
+    border: 2px solid #000;
+    background-color: #f0d9b5;
+  }
+</style>
