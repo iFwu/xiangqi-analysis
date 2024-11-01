@@ -2,6 +2,10 @@
 
 这是一个在线象棋棋盘识别与分析系统，可以从上传的图片中识别出象棋棋局，并提供最佳走法分析。
 
+PC 端截图：
+
+![Screenshot](./assets/screenshot.jpg)
+
 ## 在线演示
 
 您可以在这里体验本系统：[象棋棋盘识别与分析](https://ifwu.github.io/xiangqi-analysis/)
