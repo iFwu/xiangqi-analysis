@@ -1,5 +1,9 @@
 # 象棋棋盘识别与分析系统
 
+[![Build and Deploy](https://github.com/iFwu/xiangqi-analysis/actions/workflows/deploy.yml/badge.svg)](https://github.com/iFwu/xiangqi-analysis/actions/workflows/deploy.yml)
+[![wakatime](https://wakatime.com/badge/user/f0e08818-b0bc-4d4f-88bd-328d717e0c9f/project/1dc38102-60f0-4ff9-a470-84381d91715e.svg)](https://wakatime.com/badge/user/f0e08818-b0bc-4d4f-88bd-328d717e0c9f/project/1dc38102-60f0-4ff9-a470-84381d91715e)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 这是一个在线象棋棋盘识别与分析系统，可以从上传的图片中识别出象棋棋局，并提供最佳走法分析。
 
 PC 端截图：
