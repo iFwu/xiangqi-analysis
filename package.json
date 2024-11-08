@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md,vue}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md,vue}\"",
     "prepare": "husky",
     "lint": "eslint ",
     "test": "echo \"No tests specified\" && exit 0"

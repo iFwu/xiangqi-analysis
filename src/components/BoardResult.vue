@@ -25,79 +25,77 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue';
-  import { useChessStore } from '../stores/chess';
-  import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
+import { useChessStore } from '../stores/chess';
+import { storeToRefs } from 'pinia';
 
-  const chessStore = useChessStore();
-  const { overlayImageSrc, chessboardRect, originalImageSize } =
-    storeToRefs(chessStore);
+const chessStore = useChessStore();
+const { overlayImageSrc, chessboardRect, originalImageSize } =
+  storeToRefs(chessStore);
 
-  const MAX_WIDTH = 360; // 定义最大宽度
-  const padding = 15; // 添加间隙
+const MAX_WIDTH = 360; // 定义最大宽度
+const padding = 15; // 添加间隙
 
-  const displayX = computed(() =>
-    Math.max(0, (chessboardRect.value?.x || 0) - padding)
-  );
-  const displayY = computed(() =>
-    Math.max(0, (chessboardRect.value?.y || 0) - padding)
-  );
+const displayX = computed(() =>
+  Math.max(0, (chessboardRect.value?.x || 0) - padding)
+);
+const displayY = computed(() =>
+  Math.max(0, (chessboardRect.value?.y || 0) - padding)
+);
 
-  const displayWidth = computed(() =>
-    Math.min(
-      (originalImageSize.value?.width || 0) - displayX.value,
-      (chessboardRect.value?.width || 0) + 2 * padding
-    )
-  );
+const displayWidth = computed(() =>
+  Math.min(
+    (originalImageSize.value?.width || 0) - displayX.value,
+    (chessboardRect.value?.width || 0) + 2 * padding
+  )
+);
 
-  const displayHeight = computed(() =>
-    Math.min(
-      (originalImageSize.value?.height || 0) - displayY.value,
-      (chessboardRect.value?.height || 0) + 2 * padding
-    )
-  );
+const displayHeight = computed(() =>
+  Math.min(
+    (originalImageSize.value?.height || 0) - displayY.value,
+    (chessboardRect.value?.height || 0) + 2 * padding
+  )
+);
 
-  const scale = computed(() =>
-    Math.min(1, MAX_WIDTH / Math.max(displayWidth.value, displayHeight.value))
-  );
+const scale = computed(() =>
+  Math.min(1, MAX_WIDTH / Math.max(displayWidth.value, displayHeight.value))
+);
 
-  const horizontalScale = computed(
-    () => (originalImageSize.value?.width || 0) / displayWidth.value
-  );
+const horizontalScale = computed(
+  () => (originalImageSize.value?.width || 0) / displayWidth.value
+);
 
-  const finalWidth = computed(() => displayWidth.value * scale.value);
-  const finalHeight = computed(() => displayHeight.value * scale.value);
+const finalWidth = computed(() => displayWidth.value * scale.value);
+const finalHeight = computed(() => displayHeight.value * scale.value);
 
-  const stretchedWidth = computed(
-    () => finalWidth.value * horizontalScale.value
-  );
-  const leftOffset = computed(
-    () => (finalWidth.value - stretchedWidth.value) / 2
-  );
+const stretchedWidth = computed(() => finalWidth.value * horizontalScale.value);
+const leftOffset = computed(
+  () => (finalWidth.value - stretchedWidth.value) / 2
+);
 </script>
 
 <style scoped>
-  .board-result-section {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
+.board-result-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
 
-  .board-result-section h2 {
-    text-align: left;
-  }
+.board-result-section h2 {
+  text-align: left;
+}
 
-  .image-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    margin-top: 1rem;
-  }
+.image-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 1rem;
+}
 
-  .overlay-image {
-    position: absolute;
-    top: 0;
-  }
+.overlay-image {
+  position: absolute;
+  top: 0;
+}
 </style>
