@@ -7,9 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
+    "preview": "pnpm build && vite preview",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md,vue}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md,vue}\"",
     "prepare": "husky",

@@ -82,3 +82,23 @@ button:disabled {
   font-weight: bold;
   font-style: normal;
 }
+
+.section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  text-align: left;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.section > *:not(h2) {
+  text-align: center;
+  margin-top: 1rem;
+}

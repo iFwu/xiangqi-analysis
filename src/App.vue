@@ -19,10 +19,15 @@
             <SolutionDisplay />
           </div>
           <div class="right-column">
-            <ImageUploader @imageUpload="handleImageUpload" />
-            <BoardResult />
-            <FENDisplay />
-            <DepthControl />
+            <div class="upload-group">
+              <ImageUploader @imageUpload="handleImageUpload" />
+              <LoadDemo @selectDemo="handleImageUpload" />
+            </div>
+            <div class="result-group">
+              <BoardResult />
+              <FENDisplay />
+              <DepthControl />
+            </div>
           </div>
         </div>
       </main>
@@ -53,6 +58,7 @@ import SolutionDisplay from './components/SolutionDisplay.vue';
 import DepthControl from './components/DepthControl.vue';
 import WelcomeModal from './components/WelcomeModal.vue';
 import Spinner from './components/Spinner.vue';
+import LoadDemo from './components/LoadDemo.vue';
 
 const { templates } = useOpenCV();
 const { fetchBestMove, isEngineReady } = useChessEngine();
@@ -134,20 +140,20 @@ const handleImageUpload = (img: HTMLImageElement) => {
     gap: 0;
   }
 
-  .solution-section {
-    order: 1;
-  }
-  .upload-section {
-    order: 0;
-  }
-  .board-result-section {
+  .left-column {
     order: 2;
   }
-  .fen-section {
-    order: 3;
+
+  .right-column {
+    order: 1;
   }
-  .depth-control-section {
-    order: 4;
+
+  .upload-group {
+    order: 1;
+  }
+
+  .result-group {
+    order: 2;
   }
 }
 
@@ -166,12 +172,14 @@ const handleImageUpload = (img: HTMLImageElement) => {
 
   .right-column {
     width: calc(50% - 1rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .solution-section {
-    height: calc(100vh - 2rem);
-    overflow-y: auto;
-    order: -1;
+  .upload-group,
+  .result-group {
+    width: 100%;
   }
 }
 </style>

@@ -1,11 +1,11 @@
 <template>
-  <div class="fen-section">
+  <section class="section">
     <h2>FEN代码</h2>
     <div class="fen-container">
       <input type="text" :value="fenCode" readonly />
       <button @click="onCopy">复制</button>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -21,28 +21,15 @@ const onCopy = () => {
 </script>
 
 <style scoped>
-.fen-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.fen-section h2 {
-  text-align: left;
-}
-
 .fen-container {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  align-items: center; /* 添加这行以垂直居中对齐项目 */
+  align-items: center;
 }
 
 .fen-container input {
-  flex: 1; /* 让输入框占据剩余空间 */
-  margin: 0; /* 移除之前的 margin */
+  flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -51,7 +38,7 @@ const onCopy = () => {
 }
 
 .fen-container button {
-  flex-shrink: 0; /* 防止按钮被压缩 */
-  white-space: nowrap; /* 防止文本换行 */
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

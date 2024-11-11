@@ -1,5 +1,5 @@
 <template>
-  <div class="solution-section">
+  <section class="section">
     <h2>解法展示</h2>
     <div class="chessboard-display">
       <ChessboardDisplay
@@ -36,7 +36,7 @@
         {{ move }}
       </span>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -89,52 +89,11 @@ const gameOverMessage = computed(() =>
 </script>
 
 <style scoped>
-.solution-section {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.solution-section h2 {
-  text-align: left;
-}
-
-.solution-section > *:not(h2) {
-  text-align: center;
-}
-
 .solution-controls {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
-}
-
-button {
-  border-radius: 4px;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1em;
-  font-weight: 500;
-  background-color: var(--primary-color);
-  color: #fff;
-  cursor: pointer;
-  transition:
-    background-color 0.3s,
-    opacity 0.3s;
-  display: inline-block; /* 确保按钮可以被居中 */
-}
-
-button:hover {
-  background-color: var(--primary-hover-color);
-}
-
-button:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .chessboard-display {
