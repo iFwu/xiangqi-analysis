@@ -10,7 +10,7 @@
 }
 
 body {
-  font: 1em/1.6 var(--font-family);
+  font: 1em / 1.6 var(--font-family);
   color: var(--text-color);
   background: var(--background-color);
   margin: 0;
@@ -77,8 +77,8 @@ button:disabled {
 }
 
 @font-face {
-  font-family: 'LiSu';
-  src: url('/assets/LiSu.woff2') format('woff2');
+  font-family: "LiSu";
+  src: url("/assets/LiSu.woff2") format("woff2");
   font-weight: bold;
   font-style: normal;
 }

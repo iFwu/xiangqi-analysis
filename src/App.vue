@@ -34,8 +34,7 @@
       <footer>
         <p>
           © 2024 象棋棋盘识别与分析系统 | Powered by
-          <a href="https://github.com/official-pikafish/Pikafish">Pikafish</a
-          >&nbsp;|&nbsp;
+          <a href="https://github.com/official-pikafish/Pikafish">Pikafish</a>&nbsp;|&nbsp;
           <a href="https://github.com/iFwu/xiangqi-analysis">GitHub 源码仓库</a>
         </p>
       </footer>
