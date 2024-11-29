@@ -30,18 +30,20 @@ export const useChessStore = defineStore('chess', () => {
   };
 
   const setFenCode = (fen: string) => {
-    try {
-      console.log('[Store] 设置 FEN:', {
-        current: fenCode.value,
-        new: fen,
-        isProcessing: isProcessing.value,
-        bestMove: bestMove.value,
-      });
-      fenCode.value = fen;
-      fenHistory.value.push(fen);
-    } catch (err) {
-      setError(`设置 FEN 码时出错: ${(err as Error).message}`);
+    console.log('[Store] 设置 FEN:', {
+      current: fenCode.value,
+      new: fen,
+      isProcessing: isProcessing.value,
+      bestMove: bestMove.value,
+    });
+
+    // 如果是初始化或重置，清空历史并设置初始状态
+    if (fenCode.value === INITIAL_FEN) {
+      fenHistory.value = [fen];
+      moveHistory.value = [];
     }
+
+    fenCode.value = fen;
   };
 
   const setBestMove = (move: string) => {
@@ -63,8 +65,14 @@ export const useChessStore = defineStore('chess', () => {
     }
     try {
       const newFen = updateFEN(fenCode.value, bestMove.value);
-      setFenCode(newFen);
-      moveHistory.value.push(bestMove.value);
+      const currentMove = bestMove.value;
+
+      // 先更新历史记录
+      fenHistory.value = [...fenHistory.value, newFen];
+      moveHistory.value = [...moveHistory.value, currentMove];
+
+      // 再更新当前状态
+      fenCode.value = newFen;
       setBestMove('');
     } catch (err) {
       setError(`执行下一步时出错: ${(err as Error).message}`);
@@ -73,8 +81,11 @@ export const useChessStore = defineStore('chess', () => {
 
   const handlePreviousMove = () => {
     if (fenHistory.value.length > 1) {
-      fenHistory.value.pop();
-      moveHistory.value.pop();
+      // 移除最后一步
+      fenHistory.value = fenHistory.value.slice(0, -1);
+      moveHistory.value = moveHistory.value.slice(0, -1);
+
+      // 更新当前状态
       fenCode.value = fenHistory.value[fenHistory.value.length - 1];
       setBestMove('');
     }
@@ -82,15 +93,17 @@ export const useChessStore = defineStore('chess', () => {
 
   const resetHistory = () => {
     console.log('[Store] 重置历史');
-    bestMove.value = ''; // 清空最佳着法
+    // 先重置所有状态
+    bestMove.value = '';
     fenHistory.value = [INITIAL_FEN];
+    moveHistory.value = [];
     fenCode.value = INITIAL_FEN;
     overlayImageSrc.value = '';
     chessboardRect.value = null;
     originalImageSize.value = { width: 0, height: 0 };
     error.value = null;
     isCalculating.value = false;
-    isProcessing.value = true; // 设置为 true，表示正在处理
+    isProcessing.value = true;
   };
 
   const setDepth = (newDepth: number) => {

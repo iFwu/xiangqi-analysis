@@ -70,8 +70,24 @@ const currentMoveNumber = computed(() => moveHistory.value.length + 1);
 
 const moveItems = computed(() =>
   moveHistory.value.map((move, index) => {
-    const fenBeforeMove = fenHistory.value[index];
-    return moveToChineseNotation(fenBeforeMove, move);
+    // 确保历史记录索引有效
+    if (index >= fenHistory.value.length) {
+      console.error('历史记录不同步:', {
+        moveIndex: index,
+        fenHistoryLength: fenHistory.value.length,
+        moveHistoryLength: moveHistory.value.length,
+        fenHistory: fenHistory.value,
+        moveHistory: moveHistory.value,
+      });
+      return '未知走法';
+    }
+
+    try {
+      return moveToChineseNotation(fenHistory.value[index], move);
+    } catch (err) {
+      console.error('转换走法出错:', err);
+      return '未知走法';
+    }
   })
 );
 
