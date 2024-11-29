@@ -62,44 +62,40 @@ async function resizeAndConvertImage(
 async function getStepFunAnalysis(
   pieces: { cell: ImageData }[]
 ): Promise<string[][]> {
+  // 如果未识别棋子超过10个，直接报错
+  if (pieces.length > 10) {
+    throw new Error('未识别棋子过多（超过10个），请检查图片质量或重新截图');
+  }
+
   // 处理所有图片
   const processedImages = await Promise.all(
     pieces.map((piece) => resizeAndConvertImage(piece.cell))
   );
 
-  // 分批处理，每批最多10张图片
-  const results: string[][] = [];
-  for (let i = 0; i < processedImages.length; i += 10) {
-    const batch = processedImages.slice(i, i + 10);
-    const batchFormData = new FormData();
-    batch.forEach((blob) => batchFormData.append('image', blob));
+  // 构建请求数据
+  const formData = new FormData();
+  processedImages.forEach((blob) => formData.append('image', blob));
 
-    const response = await fetch(
-      'https://workers.nicesprite.com/api/stepfun/',
-      {
-        method: 'POST',
-        body: batchFormData,
-      }
-    );
+  const response = await fetch('https://workers.nicesprite.com/api/stepfun/', {
+    method: 'POST',
+    body: formData,
+  });
 
-    if (!response.ok) {
-      throw new Error('StepFun API 请求失败');
-    }
-
-    const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('StepFun API 返回格式错误');
-    }
-
-    const batchResults = data.choices[0].message.content
-      .split(/，|,/)
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-
-    results.push(batchResults);
+  if (!response.ok) {
+    throw new Error('StepFun API 请求失败');
   }
 
-  return results;
+  const data = await response.json();
+  if (!data.choices?.[0]?.message?.content) {
+    throw new Error('StepFun API 返回格式错误');
+  }
+
+  const results = data.choices[0].message.content
+    .split(/，|,/)
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+
+  return [results];
 }
 
 export function useImageProcessing(

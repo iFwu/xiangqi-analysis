@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, watch, onMounted, onUnmounted } from 'vue';
 
 import { useOpenCV } from './composables/useOpenCV';
 import { useChessEngine } from './composables/useChessEngine';
@@ -106,6 +106,39 @@ const handleImageUpload = async (img: HTMLImageElement) => {
   await processUploadedImage(img);
   console.log('[App] 图片处理完成');
 };
+
+// 处理剪贴板粘贴
+const handlePaste = async (e: ClipboardEvent) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+
+  for (const item of items) {
+    if (item.type.indexOf('image') === -1) continue;
+
+    const blob = item.getAsFile();
+    if (!blob) continue;
+
+    // 转换为图片元素
+    const img = new Image();
+    img.onload = () => {
+      handleImageUpload(img);
+    };
+    img.src = URL.createObjectURL(blob);
+
+    // 阻止默认粘贴行为
+    e.preventDefault();
+    break;
+  }
+};
+
+// 添加和移除事件监听
+onMounted(() => {
+  document.addEventListener('paste', handlePaste);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('paste', handlePaste);
+});
 </script>
 
 <style scoped>
