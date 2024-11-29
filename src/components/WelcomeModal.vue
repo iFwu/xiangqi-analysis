@@ -5,7 +5,6 @@
         <h2>欢迎使用</h2>
         <p>该应用正在开发完善中</p>
         <p>目前在 JJ象棋 残局截图上进行了测试</p>
-        <p>请注意：需要在设置中关闭行棋提示</p>
         <Changelog />
         <div class="button-group">
           <button @click="handleClose(false)" class="primary-button">

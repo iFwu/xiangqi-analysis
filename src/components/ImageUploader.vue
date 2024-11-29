@@ -16,7 +16,7 @@
 import { ref } from 'vue';
 
 interface ImageUploaderProps {
-  onImageUpload: (img: HTMLImageElement) => void;
+  onImageUpload: (img: HTMLImageElement) => Promise<void>;
 }
 
 const props = defineProps<ImageUploaderProps>();
@@ -29,7 +29,9 @@ const handleImageUpload = (event: Event) => {
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => {
       const img = new Image();
-      img.onload = () => props.onImageUpload(img);
+      img.onload = async () => {
+        await props.onImageUpload(img);
+      };
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);

@@ -33,7 +33,7 @@
       </main>
       <footer>
         <p>
-          © 2024 象棋棋盘识别与分析系统 | Powered by
+          2024 象棋棋盘识别与分析系统 | Powered by
           <a href="https://github.com/official-pikafish/Pikafish">Pikafish</a
           >&nbsp;|&nbsp;
           <a href="https://github.com/iFwu/xiangqi-analysis">GitHub 源码仓库</a>
@@ -69,20 +69,42 @@ const isLoading = computed(() => {
 
 const chessStore = useChessStore();
 
+// 添加调试日志
 watch(
-  () => [chessStore.fenCode, chessStore.depth],
-  () => {
-    if (chessStore.fenCode) {
-      fetchBestMove(chessStore.fenCode, chessStore.depth);
+  () =>
+    [chessStore.fenCode, chessStore.depth, chessStore.isProcessing] as [
+      string,
+      number,
+      boolean,
+    ],
+  ([newFen, newDepth, isProcessing]: [string, number, boolean], [oldFen]) => {
+    console.log('[App] 状态变化:', {
+      oldFen,
+      newFen,
+      isProcessing,
+      bestMove: chessStore.bestMove,
+    });
+
+    // 只有在处理完成且有新的 FEN 码时才触发分析
+    if (newFen && !isProcessing && newFen !== oldFen) {
+      console.log('[App] 触发引擎分析');
+      fetchBestMove(newFen, newDepth);
+    } else {
+      console.log('[App] 跳过引擎分析:', {
+        hasFen: !!newFen,
+        isProcessing,
+        fenChanged: newFen !== oldFen,
+      });
     }
   }
 );
 
 const { processUploadedImage } = useImageProcessing(templates);
 
-const handleImageUpload = (img: HTMLImageElement) => {
-  chessStore.resetHistory();
-  processUploadedImage(img);
+const handleImageUpload = async (img: HTMLImageElement) => {
+  console.log('[App] 开始处理新图片');
+  await processUploadedImage(img);
+  console.log('[App] 图片处理完成');
 };
 </script>
 

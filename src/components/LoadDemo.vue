@@ -37,14 +37,14 @@ const demoImages: DemoImage[] = [
 ];
 
 const emit = defineEmits<{
-  (e: 'selectDemo', img: HTMLImageElement): void;
+  (e: 'selectDemo', img: HTMLImageElement): Promise<void>;
 }>();
 
 const handleImageClick = (demoImage: DemoImage) => {
   const img = new Image();
   img.src = demoImage.url;
-  img.onload = () => {
-    emit('selectDemo', img);
+  img.onload = async () => {
+    await emit('selectDemo', img);
   };
 };
 </script>

@@ -1,21 +1,58 @@
 import cv from '@techstark/opencv-js';
 import { kmeans } from 'ml-kmeans';
+import { ChessboardConfig } from './config';
 
-export function detectAndExtractChessboard(
-  imgElement: HTMLImageElement,
-  expandRatioW: number = 0.055,
-  expandRatioH: number = 0.055
+function calculateAdjustmentRatio(
+  width: number,
+  height: number
 ): {
+  expandRatioH: number;
+  bottomOffsetRatio: number;
+} {
+  const actualRatio = height / width;
+  const standardRatio = ChessboardConfig.STANDARD_BOARD_RATIO;
+
+  // 使用基础值作为起点
+  let expandRatioH = ChessboardConfig.EXPAND_RATIO_H;
+  let bottomOffsetRatio = ChessboardConfig.BOTTOM_OFFSET_RATIO;
+
+  if (actualRatio > standardRatio) {
+    // 使用固定的调整因子
+    expandRatioH += ChessboardConfig.RATIO_ADJUSTMENT_FACTORS.EXPAND_H;
+    bottomOffsetRatio += ChessboardConfig.RATIO_ADJUSTMENT_FACTORS.BOTTOM;
+  }
+
+  return {
+    expandRatioH,
+    bottomOffsetRatio,
+  };
+}
+
+export function detectAndExtractChessboard(imgElement: HTMLImageElement): {
   gridCells: ImageData[];
   chessboardRect: { x: number; y: number; width: number; height: number };
+  gridHeights: number[];
 } {
   const img = cv.imread(imgElement);
   const gray = new cv.Mat();
   cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
   const blurred = new cv.Mat();
-  cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+  cv.GaussianBlur(
+    gray,
+    blurred,
+    new cv.Size(
+      ChessboardConfig.GAUSSIAN_BLUR_SIZE,
+      ChessboardConfig.GAUSSIAN_BLUR_SIZE
+    ),
+    0
+  );
   const edges = new cv.Mat();
-  cv.Canny(blurred, edges, 30, 150);
+  cv.Canny(
+    blurred,
+    edges,
+    ChessboardConfig.CANNY_THRESHOLD1,
+    ChessboardConfig.CANNY_THRESHOLD2
+  );
 
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
   const dilatedEdges = new cv.Mat();
@@ -38,6 +75,7 @@ export function detectAndExtractChessboard(
     return {
       gridCells: [],
       chessboardRect: { x: NaN, y: NaN, width: NaN, height: NaN },
+      gridHeights: [],
     };
   }
 
@@ -55,10 +93,17 @@ export function detectAndExtractChessboard(
   const rect = cv.boundingRect(maxContour);
   const croppedRegion = img.roi(rect);
 
-  const { gridCells, expandedRect } = segmentChessboard(
+  // 根据检测到的棋盘比例计算调整参数
+  const { expandRatioH, bottomOffsetRatio } = calculateAdjustmentRatio(
+    rect.width,
+    rect.height
+  );
+
+  const { gridCells, expandedRect, gridHeights } = segmentChessboard(
     croppedRegion,
-    expandRatioW,
-    expandRatioH
+    ChessboardConfig.EXPAND_RATIO_W,
+    expandRatioH,
+    bottomOffsetRatio
   );
 
   img.delete();
@@ -80,23 +125,59 @@ export function detectAndExtractChessboard(
       width: expandedRect.width,
       height: expandedRect.height,
     },
+    gridHeights,
   };
 }
 
-function segmentChessboard(
+// 计算渐变高度
+export function calculateGridHeights(totalHeight: number): number[] {
+  const rows = 10;
+  const baseHeight = Math.floor(totalHeight / rows);
+  const heightVariation = baseHeight * ChessboardConfig.HEIGHT_VARIATION_RATIO;
+  const gridHeights: number[] = [];
+
+  // 使用二次函数来计算每行的高度，实现平滑的渐变效果
+  for (let i = 0; i < rows; i++) {
+    const progress = i / (rows - 1); // 0 到 1 的进度
+    const factor = 1 + (progress * progress * heightVariation) / baseHeight;
+    gridHeights.push(Math.floor(baseHeight * factor));
+  }
+
+  // 调整总高度以匹配原始高度
+  const currentTotalHeight = gridHeights.reduce((sum, h) => sum + h, 0);
+  const scale = totalHeight / currentTotalHeight;
+  return gridHeights.map((h) => Math.floor(h * scale));
+}
+
+export function segmentChessboard(
   croppedRegion: cv.Mat,
   expandRatioW: number,
-  expandRatioH: number
+  expandRatioH: number,
+  bottomOffsetRatio: number
 ): {
   gridCells: ImageData[];
   expandedRect: { x: number; y: number; width: number; height: number };
+  gridHeights: number[];
 } {
   const grayCropped = new cv.Mat();
   cv.cvtColor(croppedRegion, grayCropped, cv.COLOR_RGBA2GRAY);
   const blurCropped = new cv.Mat();
-  cv.GaussianBlur(grayCropped, blurCropped, new cv.Size(5, 5), 0);
+  cv.GaussianBlur(
+    grayCropped,
+    blurCropped,
+    new cv.Size(
+      ChessboardConfig.GAUSSIAN_BLUR_SIZE,
+      ChessboardConfig.GAUSSIAN_BLUR_SIZE
+    ),
+    0
+  );
   const edgesCropped = new cv.Mat();
-  cv.Canny(blurCropped, edgesCropped, 50, 150);
+  cv.Canny(
+    blurCropped,
+    edgesCropped,
+    ChessboardConfig.CANNY_THRESHOLD1,
+    ChessboardConfig.CANNY_THRESHOLD2
+  );
 
   const lines = new cv.Mat();
   cv.HoughLinesP(edgesCropped, lines, 1, Math.PI / 180, 80, 100, 50);
@@ -106,6 +187,7 @@ function segmentChessboard(
     return {
       gridCells: [],
       expandedRect: { x: 0, y: 0, width: 0, height: 0 },
+      gridHeights: [],
     };
   }
 
@@ -127,6 +209,7 @@ function segmentChessboard(
     return {
       gridCells: [],
       expandedRect: { x: 0, y: 0, width: 0, height: 0 },
+      gridHeights: [],
     };
   }
 
@@ -166,12 +249,17 @@ function segmentChessboard(
     verticalClusterCenters[verticalClusterCenters.length - 1]
   );
 
+  // 计算棋盘高度并调整底部位置
+  const boardHeight = maxY - minY;
+  const bottomOffset = Math.floor(boardHeight * bottomOffsetRatio);
+  const adjustedMaxY = maxY - bottomOffset;
+
   const chessboardRegion = croppedRegion.roi(
-    new cv.Rect(minX, minY, maxX - minX, maxY - minY)
+    new cv.Rect(minX, minY, maxX - minX, adjustedMaxY - minY)
   );
 
   const regionW = maxX - minX;
-  const regionH = maxY - minY;
+  const regionH = adjustedMaxY - minY;
   const expandW = Math.floor(regionW * expandRatioW);
   const expandH = Math.floor(regionH * expandRatioH);
 
@@ -186,19 +274,19 @@ function segmentChessboard(
 
   const rows = 10;
   const cols = 9;
-  const gridHeight = Math.floor(newH / rows);
   const gridWidth = Math.floor(newW / cols);
+  const gridHeights = calculateGridHeights(newH);
 
   const gridCells: ImageData[] = [];
+  let currentY = 0;
 
   for (let i = 0; i < rows; i++) {
+    const gridHeight = gridHeights[i];
     for (let j = 0; j < cols; j++) {
-      const y1 = i * gridHeight;
-      const y2 = (i + 1) * gridHeight;
       const x1 = j * gridWidth;
       const x2 = (j + 1) * gridWidth;
       const gridCell = expandedChessboardRegion.roi(
-        new cv.Rect(x1, y1, x2 - x1, y2 - y1)
+        new cv.Rect(x1, currentY, x2 - x1, gridHeight)
       );
 
       const canvas = document.createElement('canvas');
@@ -212,6 +300,7 @@ function segmentChessboard(
 
       gridCell.delete();
     }
+    currentY += gridHeight;
   }
 
   grayCropped.delete();
@@ -224,5 +313,6 @@ function segmentChessboard(
   return {
     gridCells,
     expandedRect: { x: newX, y: newY, width: newW, height: newH },
+    gridHeights,
   };
 }

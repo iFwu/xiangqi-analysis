@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StepFun API 测试</title>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .preview img {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .response {
+            white-space: pre-wrap;
+            background: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>StepFun API 测试</h1>
+    <div class="container">
+        <form id="uploadForm">
+            <div class="drop-zone" id="dropZone">
+                <p>拖放图片到这里，或点击选择图片</p>
+                <p>支持 PNG/JPG/WEBP 格式，最大 15KB</p>
+                <input type="file" id="images" name="images" multiple accept="image/*"
+                    style="display: none;" />
+            </div>
+            <div class="preview" id="preview"></div>
+            <div>
+                <button type="submit" id="submitBtn">上传并分析</button>
+                <button type="button" id="clearBtn">清除</button>
+            </div>
+        </form>
+        <div id="error" class="error"></div>
+        <div id="response" class="response"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const preview = document.getElementById('preview');
+        const response = document.getElementById('response');
+        const error = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const imageInput = document.getElementById('images');
+        const dropZone = document.getElementById('dropZone');
+
+        // 将图片转换为 WebP 格式，并在需要时调整大小
+        async function convertToWebP(file, maxSize = 128) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // 如果图片尺寸超过限制，等比例缩小
+                    if (width > maxSize || height > maxSize) {
+                        if (width > height) {
+                            height = Math.round((height * maxSize) / width);
+                            width = maxSize;
+                        } else {
+                            width = Math.round((width * maxSize) / height);
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(blob => {
+                        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), {
+                            type: 'image/webp'
+                        }));
+                    }, 'image/webp', 0.8);
+                };
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // 处理图片文件
+        async function processImage(file) {
+            // 如果是 PNG 格式，允许任何大小但会调整尺寸
+            if (file.type === 'image/png') {
+                return await convertToWebP(file, 128);
+            }
+            
+            // 其他格式仍然限制大小为 15KB
+            if (file.size > 15 * 1024) {
+                throw new Error(`图片 ${file.name} 超过15KB限制`);
+            }
+            return file;
+        }
+
+        // 预览图片
+        async function previewImages(files) {
+            preview.innerHTML = '';
+            error.textContent = '';
+
+            if (files.length > 10) {
+                error.textContent = '最多只能选择10张图片';
+                imageInput.value = '';
+                return;
+            }
+
+            try {
+                for (const file of files) {
+                    const processedFile = await processImage(file);
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(processedFile);
+                    preview.appendChild(img);
+                }
+            } catch (err) {
+                error.textContent = err.message;
+                preview.innerHTML = '';
+                imageInput.value = '';
+            }
+        }
+
+        // 文件选择事件
+        imageInput.addEventListener('change', function () {
+            previewImages(this.files);
+        });
+
+        // 拖放事件
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            previewImages(files);
+        });
+
+        // 点击上传区域触发文件选择
+        dropZone.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // 清除按钮
+        clearBtn.addEventListener('click', () => {
+            preview.innerHTML = '';
+            response.textContent = '';
+            error.textContent = '';
+            imageInput.value = '';
+        });
+
+        // 剪贴板粘贴
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            const files = [];
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    files.push(file);
+                }
+            }
+
+            if (files.length > 0) {
+                previewImages(files);
+            }
+        });
+
+        // 提交表单
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            error.textContent = '';
+            response.textContent = '正在处理...';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                const images = preview.getElementsByTagName('img');
+
+                if (images.length === 0) {
+                    throw new Error('请先选择图片');
+                }
+
+                for (const img of images) {
+                    const response = await fetch(img.src);
+                    const blob = await response.blob();
+                    formData.append('image', blob);
+                }
+
+                const res = await fetch('https://workers.nicesprite.com/api/stepfun/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    throw new Error(data.error?.message || '请求失败');
+                }
+
+                response.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                error.textContent = `错误: ${err.message}`;
+                response.textContent = '';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

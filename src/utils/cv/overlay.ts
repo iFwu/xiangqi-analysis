@@ -20,6 +20,7 @@ const pieceTypeToChineseChar: Record<PieceName, string> = {
 export function createOverlayImage(
   originalImage: HTMLImageElement,
   chessboardRect: { x: number; y: number; width: number; height: number },
+  gridHeights: number[],
   detectedPieces: {
     position: [number, number];
     color: PieceColor;
@@ -43,17 +44,44 @@ export function createOverlayImage(
   );
 
   const cellWidth = chessboardRect.width / 9;
-  const cellHeight = chessboardRect.height / 10;
+
+  ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 9; i++) {
+    const x = chessboardRect.x + i * cellWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, chessboardRect.y);
+    ctx.lineTo(x, chessboardRect.y + chessboardRect.height);
+    ctx.stroke();
+  }
+
+  let currentY = chessboardRect.y;
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(chessboardRect.x, currentY);
+    ctx.lineTo(chessboardRect.x + chessboardRect.width, currentY);
+    ctx.stroke();
+
+    if (i < 10) {
+      currentY += gridHeights[i];
+    }
+  }
 
   detectedPieces.forEach((piece) => {
     const [row, col] = piece.position;
     const x = chessboardRect.x + col * cellWidth;
-    const y = chessboardRect.y + row * cellHeight;
+
+    let y = chessboardRect.y;
+    for (let i = 0; i < row; i++) {
+      y += gridHeights[i];
+    }
+
+    const height = gridHeights[row];
 
     ctx.strokeStyle =
       piece.color === 'red' ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
     ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, cellWidth, cellHeight);
+    ctx.strokeRect(x, y, cellWidth, height);
 
     if (piece.type && piece.type !== 'none') {
       const pieceName =
@@ -66,7 +94,7 @@ export function createOverlayImage(
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';
-      ctx.fillText(chineseChar, x + cellWidth - 5, y + cellHeight - 5);
+      ctx.fillText(chineseChar, x + cellWidth - 5, y + height - 5);
     }
   });
 

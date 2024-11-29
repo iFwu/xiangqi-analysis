@@ -1,0 +1,9 @@
+name = "stepfun-proxy"
+main = "workers/worker.ts"
+compatibility_date = "2024-01-01"
+
+account_id = "0e4bc9ebe000f0c5bdec7a2eadc65154"
+# 示例：如果你想让 Worker 处理 api.example.com 下的所有请求
+# route = "api.example.com/*"
+# 或者特定路径：
+route = "workers.nicesprite.com/api/stepfun/*"
