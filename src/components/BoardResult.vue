@@ -1,6 +1,6 @@
 <template>
   <section class="section">
-    <h2>分析结果</h2>
+    <h2>棋盘识别结果</h2>
     <div
       class="image-container"
       :style="{
@@ -11,7 +11,7 @@
       <img
         v-if="overlayImageSrc"
         :src="overlayImageSrc"
-        alt="分析结果"
+        alt="棋盘识别结果"
         class="overlay-image"
         :style="{
           left: `${leftOffset}px`,
