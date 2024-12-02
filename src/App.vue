@@ -16,15 +16,13 @@
         <WelcomeModal />
         <div class="content-wrapper">
           <div class="left-column">
+            <ImageUploader @imageUpload="handleImageUpload" />
             <SolutionDisplay />
           </div>
           <div class="right-column">
-            <div class="upload-group">
-              <ImageUploader @imageUpload="handleImageUpload" />
-              <LoadDemo @selectDemo="handleImageUpload" />
-            </div>
             <div class="result-group">
               <BoardResult />
+              <LoadDemo @selectDemo="handleImageUpload" />
               <FENDisplay />
               <DepthControl />
             </div>
@@ -193,22 +191,6 @@ onUnmounted(() => {
   .content-wrapper {
     flex-direction: column;
     gap: 0;
-  }
-
-  .left-column {
-    order: 2;
-  }
-
-  .right-column {
-    order: 1;
-  }
-
-  .upload-group {
-    order: 1;
-  }
-
-  .result-group {
-    order: 2;
   }
 }
 
